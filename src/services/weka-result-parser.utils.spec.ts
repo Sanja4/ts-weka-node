@@ -1,11 +1,13 @@
 import {WekaResultParserUtils} from './weka-result-parser.utils';
 import {RandomForestContainer} from '../model/random-forest-container.model';
-import {RandomForest} from '../model/random-forest.model';
 import {EvaluationResult} from '../model/evaluation-result.model';
-import {testRandomForestClassifierResult} from './test-data/testRandomForestClassifierResult';
 import {testEvaluationResult1} from './test-data/testEvaluationResult1';
 import {testResultString} from './test-data/testResultString';
 import {testEvaluationResult2} from './test-data/testEvaluationResult2';
+import {testAttributeImportance} from './test-data/testAttributeImportance';
+import {AttributeImportance} from '../model/attribute-importance.model';
+import {RandomForest} from '../model/random-forest.model';
+import {testRandomForestClassifierResult} from './test-data/testRandomForestClassifierResult';
 
 describe('WekaResultParserUtils', () => {
 
@@ -18,7 +20,6 @@ describe('WekaResultParserUtils', () => {
 
     test('should convert a single random forest classifier result', () => {
         const result: RandomForest = WekaResultParserUtils.parseRandomForestClassifierResult(testRandomForestClassifierResult);
-        expect(result.attributeImportance[0].includes('0.54 (     5)  trajectorySimilarityTram')).toEqual(true);
         expect(result.totalModel.length).toEqual(3);
         expect(result.totalModel[0].sizeOfTree).toEqual(477);
     });
@@ -35,6 +36,19 @@ describe('WekaResultParserUtils', () => {
         expect(result.title == 'Error on training data').toEqual(true);
         expect(result.overview.includes('Correctly Classified Instances')).toEqual(true);
         expect(result.overview.includes('Total Number of Instances')).toEqual(true);
+    });
+
+    test('should extract attribute importance', () => {
+        const result: AttributeImportance[] = WekaResultParserUtils.extractAttributeImportance(testAttributeImportance);
+        expect(result.length).toEqual(45);
+
+        expect(result[0].averageImpurityDecrease).toEqual(0.39);
+        expect(result[0].numberOfNodes).toEqual(11);
+        expect(result[0].attribute).toEqual('feature1');
+
+        expect(result[42].averageImpurityDecrease).toEqual(0);
+        expect(result[42].numberOfNodes).toEqual(0);
+        expect(result[42].attribute).toEqual('feature43');
     });
 
 });

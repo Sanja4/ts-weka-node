@@ -6,7 +6,7 @@ import {EvaluationResult} from '../model/evaluation-result.model';
 import {RandomForest} from '../model/random-forest.model';
 import {WekaTreeParserUtils} from 'ts-weka/lib/weka-tree-parser.utils.';
 import {RandomTree} from '../model/random-tree.model';
-
+import {AttributeImportance} from '../model/attribute-importance.model';
 
 export class WekaResultParserUtils {
 
@@ -155,6 +155,7 @@ export class WekaResultParserUtils {
 
         result.confusionMatrix = resultString;
 
+        // FINISHED
         return result;
     }
 
@@ -217,15 +218,38 @@ export class WekaResultParserUtils {
         }
 
         // ATTRIBUTE IMPORTANCE
-        resultString = this.removeLeadingLineBreaks(resultString);
-        startIdentifier = '\n\n';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
-        resultString = resultString.substring(startIndex);
-        resultString = this.removeTrailingLineBreaks(resultString);
+        result.attributeImportance = WekaResultParserUtils.extractAttributeImportance(resultString);
 
-        result.attributeImportance = resultString.split('\n').map((s) => this.removeLeadingSpaces(s));
-
+        // FINISHED
         return result;
+    }
+
+    /**
+     * Extracts the attribute importance from the given string.
+     * @param resultString - the result as string
+     * @returns the result as object
+     */
+    public static extractAttributeImportance(resultString: string): AttributeImportance[] {
+        const results: string[] = resultString.split('\n').map((s) => this.removeLeadingSpaces(s));
+
+        const attributeImportanceArray: AttributeImportance[] = [];
+
+        results.forEach(result => {
+            const regExp = /(\d?\.?\d*)(?:\s*\(\s*)(\d*)(?:\)\s*)(\S*)+/gm;
+            // the regExp matches the following string (w/o quotes), for example: '0.39 (    11)  trajectorySimilarityTram'
+            const regExpResult = regExp.exec(result);
+
+            if(regExpResult?.length > 0) {
+                const attributeImportance: AttributeImportance = new AttributeImportance({
+                    averageImpurityDecrease: Number.parseFloat(regExpResult[1]),
+                    numberOfNodes: Number.parseFloat(regExpResult[2]),
+                    attribute: regExpResult[3]
+                });
+                attributeImportanceArray.push(attributeImportance);
+            }
+        });
+
+        return attributeImportanceArray;
     }
 
     /**

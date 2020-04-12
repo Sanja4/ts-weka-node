@@ -1,9 +1,10 @@
 import {RandomTree} from './random-tree.model';
+import {AttributeImportance} from './attribute-importance.model';
 
 export class RandomForest {
 
     /** Attribute importance based on average impurity decrease (and number of nodes using that attribute) for each attribute. */
-    attributeImportance: string[];
+    attributeImportance: AttributeImportance[];
 
     /** The description of the classifier. */
     classifierModelDescription: string;
