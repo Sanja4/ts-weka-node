@@ -47,7 +47,7 @@ export class WekaLibraryService {
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
         console.log('allUnbalancedDatasetFilenames', allUnbalancedDatasetFilenames);
         for(const fileName of allUnbalancedDatasetFilenames) {
-            await this.balanceDataset(fileName)
+            await this.balanceDataset(fileName);
         }
     }
 
@@ -126,7 +126,7 @@ export class WekaLibraryService {
                 let i: number = 0;
                 for(const classifier of result.classifierModelFullTrainingSet.totalModel) {
                     await this.storeClassifierToFile(classifier.classifier, fileName, i);
-                    i++
+                    i++;
                 }
 
                 resolve(result);
@@ -157,35 +157,23 @@ export class WekaLibraryService {
         && fs.mkdirSync(`${this.outputDirectory}/evaluation/`, {recursive: true});
         const filePath: string = `${this.outputDirectory}/evaluation/classifier_evaluation_${fileName}.json`;
 
-        fs.writeFile(filePath, JSON.stringify(evaluation, null, 3), (err) => {
-            if(err) {
-                throw err;
-            }
-            console.log(`Saved file ${filePath}`);
-        })
+        fs.writeFileSync(filePath, JSON.stringify(evaluation, null, 3));
+        console.log(`Saved file ${filePath}`);
     }
 
     private async storeClassifierToFile(classifier: string, fileName: string, index: number): Promise<void> {
         const filePath: string = `${this.outputDirectory}/classifiers/classifier_${fileName}_${String(index +
             1).padStart(3, '0')}.txt`;
 
-        fs.writeFile(filePath, classifier, (err) => {
-            if(err) {
-                throw err;
-            }
-            console.log(`Saved file ${filePath}`);
-        })
+        fs.writeFileSync(filePath, classifier);
+        console.log(`Saved file ${filePath}`);
     }
 
     private async storeAttributeImportanceToFile(attributePerformance: string[],
                                                  fileName: string): Promise<void> {
         const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${fileName}.txt`;
 
-        fs.writeFile(filePath, attributePerformance.join('\n'), (err) => {
-            if(err) {
-                throw err;
-            }
-            console.log(`Saved file ${filePath}`);
-        })
+        fs.writeFileSync(filePath, attributePerformance.join('\n'));
+        console.log(`Saved file ${filePath}`);
     }
 }
