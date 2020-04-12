@@ -69,7 +69,6 @@ export class WekaResultParserUtils {
         resultString = resultString.slice(endIndex);
 
         // CROSS VALIDATION CLASSIFIER MODELS
-        startIdentifier = '=== Classifier model';
         result.classifierModelPerFold = [];
 
         while(resultString.includes(startIdentifier)) {
@@ -224,10 +223,7 @@ export class WekaResultParserUtils {
         resultString = resultString.substring(startIndex);
         resultString = this.removeTrailingLineBreaks(resultString);
 
-        const attributePerformance: string[] = resultString.split('\n');
-        attributePerformance.map((s) => this.removeLeadingSpaces(s));
-
-        result.attributeImportance = attributePerformance;
+        result.attributeImportance = resultString.split('\n').map((s) => this.removeLeadingSpaces(s));
 
         return result;
     }
