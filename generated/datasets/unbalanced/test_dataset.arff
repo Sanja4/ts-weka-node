@@ -1,26 +1,26 @@
-@RELATION MotionDataAccelerationOnly
+@RELATION CustomDataset
 
-@ATTRIBUTE accelerationVariance numeric
-@ATTRIBUTE accelerationMin numeric
-@ATTRIBUTE accelerationMax numeric
-@ATTRIBUTE accelerationMean numeric
-@ATTRIBUTE accelerationMedian numeric
-@ATTRIBUTE acceleration25Quantile numeric
-@ATTRIBUTE acceleration50Quantile numeric
-@ATTRIBUTE acceleration75Quantile numeric
-@ATTRIBUTE acceleration95Quantile numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy1To3Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy8To10Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy10To14Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy14To20Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy20To22Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy22To25Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy25To30Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy8To9Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy9To10Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy25To27Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy27To28Hz numeric
-@ATTRIBUTE accelerationFrequencyBandEnergy28To30Hz numeric
+@ATTRIBUTE featureA numeric
+@ATTRIBUTE featureB numeric
+@ATTRIBUTE featureC numeric
+@ATTRIBUTE featureD numeric
+@ATTRIBUTE featureE numeric
+@ATTRIBUTE featureF numeric
+@ATTRIBUTE featureG numeric
+@ATTRIBUTE featureH numeric
+@ATTRIBUTE featureI numeric
+@ATTRIBUTE featureJ numeric
+@ATTRIBUTE featureK numeric
+@ATTRIBUTE featureL numeric
+@ATTRIBUTE featureM numeric
+@ATTRIBUTE featureN numeric
+@ATTRIBUTE featureO numeric
+@ATTRIBUTE featureP numeric
+@ATTRIBUTE featureQ numeric
+@ATTRIBUTE featureR numeric
+@ATTRIBUTE featureS numeric
+@ATTRIBUTE featureT numeric
+@ATTRIBUTE featureU numeric
 @ATTRIBUTE motion {"stationary","walk","bike","car","bus","tram","train"}
 
 @DATA

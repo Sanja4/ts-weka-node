@@ -1,6 +1,6 @@
 {
   "name": "ts-weka-node",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Weka helper package for node servers",
   "scripts": {
     "build": "tsc",
@@ -22,8 +22,10 @@
   },
   "homepage": "https://github.com/SophiaLi1/ts-weka-node#readme",
   "devDependencies": {
+    "@types/color-name": "^1.1.1",
     "@types/jest": "^25.2.1",
     "@types/node": "^13.11.1",
+    "@types/yargs": "^15.0.4",
     "jest": "^25.3.0",
     "ts-jest": "^25.3.1",
     "typescript": "^3.8.3"
