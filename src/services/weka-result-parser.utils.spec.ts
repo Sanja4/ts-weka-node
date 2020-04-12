@@ -18,7 +18,7 @@ describe('WekaResultParserUtils', () => {
 
     test('should convert a single random forest classifier result', () => {
         const result: RandomForest = WekaResultParserUtils.parseRandomForestClassifierResult(testRandomForestClassifierResult);
-        expect(result.attributeImportance[0].includes('      0.54 (     5)  trajectorySimilarityTram')).toEqual(true);
+        expect(result.attributeImportance[0].includes('0.54 (     5)  trajectorySimilarityTram')).toEqual(true);
         expect(result.totalModel.length).toEqual(3);
         expect(result.totalModel[0].sizeOfTree).toEqual(477);
     });
