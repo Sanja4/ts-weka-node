@@ -8,6 +8,8 @@ import {WekaTreeParserUtils} from 'ts-weka/lib/weka-tree-parser.utils.';
 import {RandomTree} from '../model/random-tree.model';
 import {AttributeImportance} from '../model/attribute-importance.model';
 import {CrossValidationResult} from '../model/cross-validation-result.model';
+import {DetailedAccuracyByClass} from '../model/detailed-accuracy-by-class.model';
+import {DetailedAccuracy} from '../model/detailed-accuracy.model';
 
 export class WekaResultParserUtils {
 
@@ -143,7 +145,8 @@ export class WekaResultParserUtils {
         endIdentifier = '\n\n=== Confusion Matrix ===';
         startIndex = resultString.search(startIdentifier) + startIdentifier.length;
         endIndex = resultString.search(endIdentifier);
-        result.detailedAccuracyByClass = resultString.substring(startIndex, endIndex);
+        const detailedAccuracyByClassString: string = resultString.substring(startIndex, endIndex);
+        result.detailedAccuracy = this.extractDetailedAccuracy(detailedAccuracyByClassString);
         resultString = resultString.slice(endIndex);
 
         // CONFUSION MATRIX (last entry --> special)
@@ -333,5 +336,63 @@ export class WekaResultParserUtils {
             }
         });
         return crossVal;
+    }
+
+    /**
+     * Extracts the detailed accuracy results from the given string.
+     * @param resultString - the result as string
+     * @returns the result as object
+     */
+    static extractDetailedAccuracy(resultString: string): DetailedAccuracy {
+        resultString = resultString.replace(/,/g, '.');
+
+        const detailedAccuracy: DetailedAccuracy = new DetailedAccuracy();
+        const accuracyByClasses: DetailedAccuracyByClass[] = [];
+        const weightedAverage: DetailedAccuracyByClass = new DetailedAccuracyByClass();
+
+        const regExp = /(\d+\.\d*)+/g;
+        let startIndexOfClass: number;
+
+        resultString.split('\n').forEach(line => {
+            if(line.includes('Class')) {
+                startIndexOfClass = line.indexOf('Class');
+                return;
+            }
+
+            const regExpMatchResult = line.match(regExp);
+            if(regExpMatchResult == null) {
+                return;
+            }
+
+            if(line.includes('Weighted Avg.')) {
+                weightedAverage.truePositiveRate = Number.parseFloat(regExpMatchResult[0]);
+                weightedAverage.falsePositiveRate = Number.parseFloat(regExpMatchResult[1]);
+                weightedAverage.precision = Number.parseFloat(regExpMatchResult[2]);
+                weightedAverage.recall = Number.parseFloat(regExpMatchResult[3]);
+                weightedAverage.fMeasure = Number.parseFloat(regExpMatchResult[4]);
+                weightedAverage.matthewsCorrelationCoefficientMCC = Number.parseFloat(regExpMatchResult[5]);
+                weightedAverage.rocArea = Number.parseFloat(regExpMatchResult[6]);
+                weightedAverage.pcrArea = Number.parseFloat(regExpMatchResult[7]);
+                weightedAverage.class = null;
+                return;
+            }
+
+            const detailedAccuracyByClass: DetailedAccuracyByClass = new DetailedAccuracyByClass();
+            detailedAccuracyByClass.truePositiveRate = Number.parseFloat(regExpMatchResult[0]);
+            detailedAccuracyByClass.falsePositiveRate = Number.parseFloat(regExpMatchResult[1]);
+            detailedAccuracyByClass.precision = Number.parseFloat(regExpMatchResult[2]);
+            detailedAccuracyByClass.recall = Number.parseFloat(regExpMatchResult[3]);
+            detailedAccuracyByClass.fMeasure = Number.parseFloat(regExpMatchResult[4]);
+            detailedAccuracyByClass.matthewsCorrelationCoefficientMCC = Number.parseFloat(regExpMatchResult[5]);
+            detailedAccuracyByClass.rocArea = Number.parseFloat(regExpMatchResult[6]);
+            detailedAccuracyByClass.pcrArea = Number.parseFloat(regExpMatchResult[7]);
+            detailedAccuracyByClass.class = line.substring(startIndexOfClass);
+
+            accuracyByClasses.push(detailedAccuracyByClass);
+        });
+
+        detailedAccuracy.accuracyByClass = accuracyByClasses;
+        detailedAccuracy.weightedAverage = weightedAverage;
+        return detailedAccuracy;
     }
 }

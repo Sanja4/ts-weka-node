@@ -10,6 +10,8 @@ import {CrossValidationResult} from '../model/cross-validation-result.model';
 import {EvaluationResult} from '../model/evaluation-result.model';
 import {testEvaluationResult1} from './test-data/testEvaluationResult1';
 import {testEvaluationResult2} from './test-data/testEvaluationResult2';
+import {testDetailedAccuracyByClass} from './test-data/testDetailedAccuracyByClass';
+import {DetailedAccuracy} from '../model/detailed-accuracy.model';
 
 describe('WekaResultParserUtils', () => {
 
@@ -65,6 +67,47 @@ describe('WekaResultParserUtils', () => {
         expect(result.relativeAbsoluteError).toEqual(10.6377);
         expect(result.rootRelativeSquaredError).toEqual(26.2871);
         expect(result.totalNumberOfInstances).toEqual(11609);
+    });
+
+    test('should extract detailed accuracy', () => {
+        const result: DetailedAccuracy = WekaResultParserUtils.extractDetailedAccuracy(testDetailedAccuracyByClass);
+
+        expect(result.accuracyByClass.length).toEqual(7);
+        expect(result.accuracyByClass[0].class).toEqual('stationary');
+        expect(result.accuracyByClass[1].class).toEqual('walk');
+        expect(result.accuracyByClass[2].class).toEqual('bike');
+        expect(result.accuracyByClass[3].class).toEqual('car');
+        expect(result.accuracyByClass[4].class).toEqual('bus');
+        expect(result.accuracyByClass[5].class).toEqual('tram');
+        expect(result.accuracyByClass[6].class).toEqual('train');
+
+        expect(result.accuracyByClass[0].truePositiveRate).toEqual(0.974);
+        expect(result.accuracyByClass[0].falsePositiveRate).toEqual(0.001);
+        expect(result.accuracyByClass[0].precision).toEqual(0.985);
+        expect(result.accuracyByClass[0].recall).toEqual(0.974);
+        expect(result.accuracyByClass[0].fMeasure).toEqual(0.979);
+        expect(result.accuracyByClass[0].matthewsCorrelationCoefficientMCC).toEqual(0.977);
+        expect(result.accuracyByClass[0].rocArea).toEqual(1.000);
+        expect(result.accuracyByClass[0].pcrArea).toEqual(0.997);
+
+        expect(result.accuracyByClass[4].truePositiveRate).toEqual(0.959);
+        expect(result.accuracyByClass[4].falsePositiveRate).toEqual(0.013);
+        expect(result.accuracyByClass[4].precision).toEqual(0.937);
+        expect(result.accuracyByClass[4].recall).toEqual(0.959);
+        expect(result.accuracyByClass[4].fMeasure).toEqual(0.948);
+        expect(result.accuracyByClass[4].matthewsCorrelationCoefficientMCC).toEqual(0.937);
+        expect(result.accuracyByClass[4].rocArea).toEqual(0.998);
+        expect(result.accuracyByClass[4].pcrArea).toEqual(0.992);
+
+        expect(result.weightedAverage.truePositiveRate).toEqual(0.973);
+        expect(result.weightedAverage.falsePositiveRate).toEqual(0.006);
+        expect(result.weightedAverage.precision).toEqual(0.973);
+        expect(result.weightedAverage.recall).toEqual(0.973);
+        expect(result.weightedAverage.fMeasure).toEqual(0.973);
+        expect(result.weightedAverage.matthewsCorrelationCoefficientMCC).toEqual(0.967);
+        expect(result.weightedAverage.rocArea).toEqual(0.999);
+        expect(result.weightedAverage.pcrArea).toEqual(0.996);
+        expect(result.weightedAverage.class).toEqual(null);
     });
 
 });
