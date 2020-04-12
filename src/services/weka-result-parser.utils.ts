@@ -7,6 +7,7 @@ import {RandomForest} from '../model/random-forest.model';
 import {WekaTreeParserUtils} from 'ts-weka/lib/weka-tree-parser.utils.';
 import {RandomTree} from '../model/random-tree.model';
 import {AttributeImportance} from '../model/attribute-importance.model';
+import {CrossValidationResult} from '../model/cross-validation-result.model';
 
 export class WekaResultParserUtils {
 
@@ -128,12 +129,13 @@ export class WekaResultParserUtils {
         result.title = resultString.substring(startIndex, endIndex);
         resultString = resultString.slice(endIndex);
 
-        // OVERVIEW
+        // CROSS VALIDATION RESULTS
         startIdentifier = '===\n\n';
         endIdentifier = '\n\n\n=== Detailed Accuracy By Class ===';
         startIndex = resultString.search(startIdentifier) + startIdentifier.length;
         endIndex = resultString.search(endIdentifier);
-        result.overview = resultString.substring(startIndex, endIndex);
+        const crossValidationResultString = resultString.substring(startIndex, endIndex);
+        result.crossValidationResult = this.extractCrossValidationResult(crossValidationResultString);
         resultString = resultString.slice(endIndex);
 
         // DETAILED ACCURACY BY CLASS
@@ -286,5 +288,50 @@ export class WekaResultParserUtils {
         }
 
         return s;
+    }
+
+    /**
+     * Extracts the cross validation results from the given string.
+     * @param resultString - the result as string
+     * @returns the result as object
+     */
+    static extractCrossValidationResult(resultString: string): CrossValidationResult {
+        const crossValidationLines: string[] = resultString.split('\n');
+
+        const regExp = /^(?:\D*)(\d*\.?\d*)(?:\s*)(\d*\.?\d*)+/gm;
+        let regexResult;
+
+        const crossVal: CrossValidationResult = new CrossValidationResult();
+
+        crossValidationLines.forEach(line => {
+            if(line.includes('Correctly Classified Instances')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.correctlyClassifiedInstancesAbsolute = Number.parseFloat(regexResult[1]);
+                crossVal.correctlyClassifiedInstancesRelative = Number.parseFloat(regexResult[2]);
+            } else if(line.includes('Incorrectly Classified Instances')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.inCorrectlyClassifiedInstancesAbsolute = Number.parseFloat(regexResult[1]);
+                crossVal.inCorrectlyClassifiedInstancesRelative = Number.parseFloat(regexResult[2]);
+            } else if(line.includes('Kappa statistic')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.kappaStatistic = Number.parseFloat(regexResult[1]);
+            } else if(line.includes('Mean absolute error')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.meanAbsoluteError = Number.parseFloat(regexResult[1]);
+            } else if(line.includes('Root mean squared error')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.rootMeanSquaredError = Number.parseFloat(regexResult[1]);
+            } else if(line.includes('Relative absolute error')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.relativeAbsoluteError = Number.parseFloat(regexResult[1]);
+            } else if(line.includes('Root relative squared error')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.rootRelativeSquaredError = Number.parseFloat(regexResult[1]);
+            } else if(line.includes('Total Number of Instances')) {
+                regexResult = regExp.exec(resultString);
+                crossVal.totalNumberOfInstances = Number.parseFloat(regexResult[1]);
+            }
+        });
+        return crossVal;
     }
 }
