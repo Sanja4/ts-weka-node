@@ -21,6 +21,10 @@
     "url": "https://github.com/SophiaLi1/ts-weka-node/issues"
   },
   "homepage": "https://github.com/SophiaLi1/ts-weka-node#readme",
+  "dependencies": {
+    "fs-extra": "^9.0.0",
+    "ts-weka": "0.0.3"
+  },
   "devDependencies": {
     "@types/color-name": "^1.1.1",
     "@types/jest": "^25.2.1",
@@ -46,9 +50,5 @@
       "**/?(*.)+(spec|test).+(ts|tsx|js)"
     ],
     "preset": "ts-jest"
-  },
-  "dependencies": {
-    "fs-extra": "^9.0.0",
-    "ts-weka": "0.0.1"
   }
 }
