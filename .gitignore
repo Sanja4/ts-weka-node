@@ -1,3 +1,5 @@
 .idea
 lib
 node_modules
+output
+*.iml

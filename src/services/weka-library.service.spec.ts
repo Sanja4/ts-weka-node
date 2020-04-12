@@ -3,7 +3,7 @@ import {RandomForestContainer} from '../model/random-forest-container.model';
 
 describe('WekaLibraryService', () => {
 
-    const serviceUnderTest: WekaLibraryService = new WekaLibraryService('./generated', './generated');
+    const serviceUnderTest: WekaLibraryService = new WekaLibraryService('./output', './input');
 
     test('should learn random forest ', async() => {
         const result: RandomForestContainer = await serviceUnderTest.learnRandomForest('test_dataset');
