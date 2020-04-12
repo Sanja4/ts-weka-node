@@ -5,7 +5,23 @@
     "declaration": true,
     "outDir": "./lib",
     "strict": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "node_modules/*",
+        "src/types/*"
+      ]
+    },
+    "lib": [
+      "es2018",
+      "dom"
+    ]
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*"]

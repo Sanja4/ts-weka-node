@@ -18,7 +18,7 @@ export class WekaLibraryService {
      */
     // TODO test
     constructor(private outputDirectory: string, private inputDirectory: string, private readonly wekaClassPath?: string) {
-        this.wekaClassPath = wekaClassPath ?? `./src/bin/weka-3.9.3.jar`;
+        this.wekaClassPath = wekaClassPath != null ? wekaClassPath : `./src/bin/weka-3.9.3.jar`;
     }
 
     public getUnbalancedDatasetsDirectory(): string {
@@ -73,7 +73,7 @@ export class WekaLibraryService {
     public learnRandomForest(fileName: string, options?: GlobalWekaOptions,
                              randomForestOptions?: RandomForestOptions): Promise<RandomForestContainer> {
         const trainingFilePath: string = this.getTrainingFilePath(fileName);
-        options = options ?? {
+        options = options != null ? options : {
             numberOfSlots: 0,
             numberOfFolds: 5
         } as GlobalWekaOptions;
@@ -81,7 +81,7 @@ export class WekaLibraryService {
         // set the training file name in case the global options were specified but the user forgot to set the training file name
         options.trainingFileName = trainingFilePath;
 
-        randomForestOptions = randomForestOptions ?? {
+        randomForestOptions = randomForestOptions != null ? randomForestOptions : {
             depth: 0,
             numberOfIterations: 10,
             minNumberOfInstances: 10
