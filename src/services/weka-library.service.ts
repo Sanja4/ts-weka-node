@@ -4,6 +4,7 @@ import {RandomForestContainer} from '../model/random-forest-container.model';
 import {GlobalWekaOptions} from '../model/global-weka-options.model';
 import {RandomForestOptions} from '../model/random-forest-options.model';
 import {EvaluationResult} from '../model/evaluation-result.model';
+import {AttributeImportance} from '../model/attribute-importance.model';
 
 const exec = require('child_process').exec;
 const fs = require('fs-extra');
@@ -169,11 +170,11 @@ export class WekaLibraryService {
         console.log(`Saved file ${filePath}`);
     }
 
-    private async storeAttributeImportanceToFile(attributePerformance: string[],
+    private async storeAttributeImportanceToFile(attributeImportances: AttributeImportance[],
                                                  fileName: string): Promise<void> {
-        const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${fileName}.txt`;
+        const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${fileName}.json`;
 
-        fs.writeFileSync(filePath, attributePerformance.join('\n'));
+        fs.writeFileSync(filePath, JSON.stringify(attributeImportances));
         console.log(`Saved file ${filePath}`);
     }
 }

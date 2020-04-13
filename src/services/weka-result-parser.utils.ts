@@ -246,7 +246,7 @@ export class WekaResultParserUtils {
             // the regExp matches the following string (w/o quotes), for example: '0.39 (    11)  trajectorySimilarityTram'
             const regExpResult = regExp.exec(result);
 
-            if(regExpResult?.length > 0) {
+            if(regExpResult != null && regExpResult.length > 0) {
                 const attributeImportance: AttributeImportance = new AttributeImportance({
                     averageImpurityDecrease: Number.parseFloat(regExpResult[1]),
                     numberOfNodes: Number.parseFloat(regExpResult[2]),
