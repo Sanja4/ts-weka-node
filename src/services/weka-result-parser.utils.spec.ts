@@ -118,15 +118,33 @@ describe('WekaResultParserUtils', () => {
         expect(result.matrixElements.length).toEqual(7);
 
         expect(result.matrixElements[0].trueClass).toEqual('stationary');
-        const expected0: Array<[string, number]> = [['stationary', 970], ['walk', 1], ['bike', 0], ['car', 0], ['bus', 4], ['tram', 0], ['train', 21]];
+        const expected0 = [{predictedClass: 'stationary', weight: 970}, {
+            predictedClass: 'walk',
+            weight: 1
+        }, {predictedClass: 'bike', weight: 0}, {predictedClass: 'car', weight: 0}, {
+            predictedClass: 'bus',
+            weight: 4
+        }, {predictedClass: 'tram', weight: 0}, {predictedClass: 'train', weight: 21}];
         expect(result.matrixElements[0].classifiedAs).toEqual(expected0);
 
         expect(result.matrixElements[4].trueClass).toEqual('bus');
-        const expected4: Array<[string, number]> = [['stationary', 4], ['walk', 3], ['bike', 1], ['car', 60], ['bus', 1895], ['tram', 0], ['train', 12]];
+        const expected4 = [{predictedClass: 'stationary', weight: 4}, {predictedClass: 'walk', weight: 3}, {
+            predictedClass: 'bike',
+            weight: 1
+        }, {predictedClass: 'car', weight: 60}, {predictedClass: 'bus', weight: 1895}, {
+            predictedClass: 'tram',
+            weight: 0
+        }, {predictedClass: 'train', weight: 12}];
         expect(result.matrixElements[4].classifiedAs).toEqual(expected4);
 
         expect(result.matrixElements[6].trueClass).toEqual('train');
-        const expected6: Array<[string, number]> = [['stationary', 7], ['walk', 0], ['bike', 0], ['car', 19], ['bus', 36], ['tram', 3], ['train', 1224]];
+        const expected6 = [{predictedClass: 'stationary', weight: 7}, {predictedClass: 'walk', weight: 0}, {
+            predictedClass: 'bike',
+            weight: 0
+        }, {predictedClass: 'car', weight: 19}, {predictedClass: 'bus', weight: 36}, {
+            predictedClass: 'tram',
+            weight: 3
+        }, {predictedClass: 'train', weight: 1224}];
         expect(result.matrixElements[6].classifiedAs).toEqual(expected6);
     });
 
@@ -135,15 +153,149 @@ describe('WekaResultParserUtils', () => {
         expect(result.matrixElements.length).toEqual(11);
 
         expect(result.matrixElements[0].trueClass).toEqual('open front left');
-        const expected0: Array<[string, number]> = [['open front left', 134], ['close front left', 11], ['open front right', 11], ['close front right', 3], ['open back left', 15], ['close back left', 3], ['open back right', 3], ['close back right', 0], ['no car door', 126], ['open trunk', 15], ['close trunk', 2]];
+        const expected0 = [
+            {
+                predictedClass: 'open front left',
+                weight: 134
+            },
+            {
+                predictedClass: 'close front left',
+                weight: 11
+            },
+            {
+                predictedClass: 'open front right',
+                weight: 11
+            },
+            {
+                predictedClass: 'close front right',
+                weight: 3
+            },
+            {
+                predictedClass: 'open back left',
+                weight: 15
+            },
+            {
+                predictedClass: 'close back left',
+                weight: 3
+            },
+            {
+                predictedClass: 'open back right',
+                weight: 3
+            },
+            {
+                predictedClass: 'close back right',
+                weight: 0
+            },
+            {
+                predictedClass: 'no car door',
+                weight: 126
+            },
+            {
+                predictedClass: 'open trunk',
+                weight: 15
+            },
+            {
+                predictedClass: 'close trunk',
+                weight: 2
+            }
+        ];
         expect(result.matrixElements[0].classifiedAs).toEqual(expected0);
 
         expect(result.matrixElements[5].trueClass).toEqual('close back left');
-        const expected5: Array<[string, number]> = [['open front left', 4], ['close front left', 7], ['open front right', 1], ['close front right', 3], ['open back left', 24], ['close back left', 158], ['open back right', 3], ['close back right', 8], ['no car door', 44], ['open trunk', 8], ['close trunk', 25]];
+        const expected5 = [
+            {
+                predictedClass: 'open front left',
+                weight: 4
+            },
+            {
+                predictedClass: 'close front left',
+                weight: 7
+            },
+            {
+                predictedClass: 'open front right',
+                weight: 1
+            },
+            {
+                predictedClass: 'close front right',
+                weight: 3
+            },
+            {
+                predictedClass: 'open back left',
+                weight: 24
+            },
+            {
+                predictedClass: 'close back left',
+                weight: 158
+            },
+            {
+                predictedClass: 'open back right',
+                weight: 3
+            },
+            {
+                predictedClass: 'close back right',
+                weight: 8
+            },
+            {
+                predictedClass: 'no car door',
+                weight: 44
+            },
+            {
+                predictedClass: 'open trunk',
+                weight: 8
+            },
+            {
+                predictedClass: 'close trunk',
+                weight: 25
+            }
+        ];
         expect(result.matrixElements[5].classifiedAs).toEqual(expected5);
-
         expect(result.matrixElements[10].trueClass).toEqual('close trunk');
-        const expected10: Array<[string, number]> = [['open front left', 2], ['close front left', 10], ['open front right', 5], ['close front right', 10], ['open back left', 14], ['close back left', 19], ['open back right', 11], ['close back right', 10], ['no car door', 94], ['open trunk', 27], ['close trunk', 216]];
+        const expected10 = [
+            {
+                predictedClass: 'open front left',
+                weight: 2
+            },
+            {
+                predictedClass: 'close front left',
+                weight: 10
+            },
+            {
+                predictedClass: 'open front right',
+                weight: 5
+            },
+            {
+                predictedClass: 'close front right',
+                weight: 10
+            },
+            {
+                predictedClass: 'open back left',
+                weight: 14
+            },
+            {
+                predictedClass: 'close back left',
+                weight: 19
+            },
+            {
+                predictedClass: 'open back right',
+                weight: 11
+            },
+            {
+                predictedClass: 'close back right',
+                weight: 10
+            },
+            {
+                predictedClass: 'no car door',
+                weight: 94
+            },
+            {
+                predictedClass: 'open trunk',
+                weight: 27
+            },
+            {
+                predictedClass: 'close trunk',
+                weight: 216
+            }
+        ];
         expect(result.matrixElements[10].classifiedAs).toEqual(expected10);
     });
 

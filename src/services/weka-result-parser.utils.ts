@@ -451,14 +451,14 @@ export class WekaResultParserUtils {
      * @param splitString - the string to extract the information from
      * @param trueClasses - all available classes in the confusion matrix
      */
-    private static extractClassifiedAs(splitString: string, trueClasses: string[]): Array<[string, number]> {
-        const classifiedAs: Array<[string, number]> = [];
+    private static extractClassifiedAs(splitString: string, trueClasses: string[]): Array<{predictedClass: string, weight: number}> {
+        const classifiedAs: Array<{predictedClass: string, weight: number}> = [];
         const classifiedAsRegExp = /\d+/g;
 
         let match;
         let i = 0;
         while((match = classifiedAsRegExp.exec(splitString)) != null) {
-            classifiedAs.push([trueClasses[i], Number.parseFloat(match[0])]);
+            classifiedAs.push({predictedClass: trueClasses[i], weight: Number.parseFloat(match[0])});
             i++;
         }
 

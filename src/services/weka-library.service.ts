@@ -23,13 +23,13 @@ export class WekaLibraryService {
     }
 
     public getUnbalancedDatasetsDirectory(): string {
-        const directoryName: string = `${this.outputDirectory}/datasets/unbalanced/`;
+        const directoryName: string = `${this.inputDirectory}/datasets/unbalanced/`;
         !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
         return directoryName;
     }
 
     public getBalancedDatasetsDirectory(): string {
-        const directoryName: string = `${this.outputDirectory}/datasets/balanced/`;
+        const directoryName: string = `${this.inputDirectory}/datasets/balanced/`;
         !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
         return directoryName;
     }
