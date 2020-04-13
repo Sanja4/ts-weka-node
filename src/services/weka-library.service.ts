@@ -12,10 +12,10 @@ const fs = require('fs-extra');
 export class WekaLibraryService {
 
     /**
-     * The absolute path to the weka JAR, e.g.
-     * @param inputDirectory
-     * @param wekaClassPath
+     *
+     * @param inputDirectory - the path to the input datasets
      * @param outputDirectory - the output directory, e.g. './generated'
+     * @param wekaClassPath - the path to the Weka JAR (optional, uses Weka 3.9.3 by default)
      */
     // TODO test
     constructor(private outputDirectory: string, private inputDirectory: string, private readonly wekaClassPath?: string) {
