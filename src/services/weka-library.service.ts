@@ -82,11 +82,18 @@ export class WekaLibraryService {
      * @param options - GlobalWekaOptions (optional)
      * @param randomForestOptions - RandomForestOptions (optional)
      */
-    public learnRandomForest(fileName: string, isArffFileBalanced: boolean, options?: GlobalWekaOptions,
+    public learnRandomForest(fileName: string, isArffFileBalanced?: boolean, options?: GlobalWekaOptions,
                              randomForestOptions?: RandomForestOptions): Promise<RandomForestContainer> {
 
         const trainingFilePath: string = isArffFileBalanced ? this.getTrainingFilePathBalanced(
             fileName) : this.getTrainingFilePathUnbalanced(fileName);
+
+        if (options == null) {
+            options = new GlobalWekaOptions();
+        }
+        if (randomForestOptions == null) {
+            randomForestOptions = new RandomForestOptions();
+        }
 
         return new Promise<RandomForestContainer>(resolve => {
             // call Weka

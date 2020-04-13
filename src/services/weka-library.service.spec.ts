@@ -5,9 +5,9 @@ describe('WekaLibraryService', () => {
 
     const serviceUnderTest: WekaLibraryService = new WekaLibraryService('./output', './input');
 
-    test('should learn random forest ', async() => {
+    test('should learn random forest ', async () => {
         const result: RandomForestContainer = await serviceUnderTest.learnRandomForest('test_dataset');
-        expect(result.options).toEqual('-num-slots 0 -I 10 -M 10 -depth 0 -print -attribute-importance');
+        expect(result.options).toEqual('-num-slots 0 -I 100 -M 1 -depth 0 -print -attribute-importance');
     });
 
 });
