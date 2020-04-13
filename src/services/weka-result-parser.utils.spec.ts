@@ -12,6 +12,9 @@ import {testEvaluationResult1} from './test-data/testEvaluationResult1';
 import {testEvaluationResult2} from './test-data/testEvaluationResult2';
 import {testDetailedAccuracyByClass} from './test-data/testDetailedAccuracyByClass';
 import {DetailedAccuracy} from '../model/detailed-accuracy.model';
+import {testConfusionMatrix1} from './test-data/testConfusionMatrix1';
+import {ConfusionMatrix} from '../model/confusion-matrix.model';
+import {testConfusionMatrix2} from './test-data/testConfusionMatrix2';
 
 describe('WekaResultParserUtils', () => {
 
@@ -108,6 +111,40 @@ describe('WekaResultParserUtils', () => {
         expect(result.weightedAverage.rocArea).toEqual(0.999);
         expect(result.weightedAverage.pcrArea).toEqual(0.996);
         expect(result.weightedAverage.class).toEqual(null);
+    });
+
+    test('should extract confusion result (1)', () => {
+        const result: ConfusionMatrix = WekaResultParserUtils.extractConfusionMatrix(testConfusionMatrix1);
+        expect(result.matrixElements.length).toEqual(7);
+
+        expect(result.matrixElements[0].trueClass).toEqual('stationary');
+        const expected0: Array<[string, number]> = [['stationary', 970], ['walk', 1], ['bike', 0], ['car', 0], ['bus', 4], ['tram', 0], ['train', 21]];
+        expect(result.matrixElements[0].classifiedAs).toEqual(expected0);
+
+        expect(result.matrixElements[4].trueClass).toEqual('bus');
+        const expected4: Array<[string, number]> = [['stationary', 4], ['walk', 3], ['bike', 1], ['car', 60], ['bus', 1895], ['tram', 0], ['train', 12]];
+        expect(result.matrixElements[4].classifiedAs).toEqual(expected4);
+
+        expect(result.matrixElements[6].trueClass).toEqual('train');
+        const expected6: Array<[string, number]> = [['stationary', 7], ['walk', 0], ['bike', 0], ['car', 19], ['bus', 36], ['tram', 3], ['train', 1224]];
+        expect(result.matrixElements[6].classifiedAs).toEqual(expected6);
+    });
+
+    test('should extract confusion result (2)', () => {
+        const result: ConfusionMatrix = WekaResultParserUtils.extractConfusionMatrix(testConfusionMatrix2);
+        expect(result.matrixElements.length).toEqual(11);
+
+        expect(result.matrixElements[0].trueClass).toEqual('open front left');
+        const expected0: Array<[string, number]> = [['open front left', 134], ['close front left', 11], ['open front right', 11], ['close front right', 3], ['open back left', 15], ['close back left', 3], ['open back right', 3], ['close back right', 0], ['no car door', 126], ['open trunk', 15], ['close trunk', 2]];
+        expect(result.matrixElements[0].classifiedAs).toEqual(expected0);
+
+        expect(result.matrixElements[5].trueClass).toEqual('close back left');
+        const expected5: Array<[string, number]> = [['open front left', 4], ['close front left', 7], ['open front right', 1], ['close front right', 3], ['open back left', 24], ['close back left', 158], ['open back right', 3], ['close back right', 8], ['no car door', 44], ['open trunk', 8], ['close trunk', 25]];
+        expect(result.matrixElements[5].classifiedAs).toEqual(expected5);
+
+        expect(result.matrixElements[10].trueClass).toEqual('close trunk');
+        const expected10: Array<[string, number]> = [['open front left', 2], ['close front left', 10], ['open front right', 5], ['close front right', 10], ['open back left', 14], ['close back left', 19], ['open back right', 11], ['close back right', 10], ['no car door', 94], ['open trunk', 27], ['close trunk', 216]];
+        expect(result.matrixElements[10].classifiedAs).toEqual(expected10);
     });
 
 });

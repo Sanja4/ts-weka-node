@@ -10,6 +10,8 @@ import {AttributeImportance} from '../model/attribute-importance.model';
 import {CrossValidationResult} from '../model/cross-validation-result.model';
 import {DetailedAccuracyByClass} from '../model/detailed-accuracy-by-class.model';
 import {DetailedAccuracy} from '../model/detailed-accuracy.model';
+import {ConfusionMatrix} from '../model/confusion-matrix.model';
+import {ConfusionMatrixElement} from '../model/confusion-matrix-element.model';
 
 export class WekaResultParserUtils {
 
@@ -158,7 +160,7 @@ export class WekaResultParserUtils {
         resultString = this.removeLeadingLineBreaks(resultString);
         resultString = this.removeTrailingLineBreaks(resultString);
 
-        result.confusionMatrix = resultString;
+        result.confusionMatrix = this.extractConfusionMatrix(resultString);
 
         // FINISHED
         return result;
@@ -394,5 +396,72 @@ export class WekaResultParserUtils {
         detailedAccuracy.accuracyByClass = accuracyByClasses;
         detailedAccuracy.weightedAverage = weightedAverage;
         return detailedAccuracy;
+    }
+
+    /**
+     * Extracts the confusion matrix from the given string
+     * @param resultString - the result as string
+     * @returns the result as object
+     */
+    static extractConfusionMatrix(resultString: string): ConfusionMatrix {
+        const splitString: string[] = resultString.split('\n');
+        const trueClasses: string[] = this.extractTrueClasses(splitString);
+        const matrixElements: ConfusionMatrixElement[] = [];
+
+        for(let i = 0; i < splitString.length; i++) {
+            for(let j = 0; j < trueClasses.length; j++) {
+                if(splitString[i].includes(trueClasses[j])) {
+                    const element: ConfusionMatrixElement = new ConfusionMatrixElement();
+                    element.trueClass = trueClasses[j];
+                    element.classifiedAs = this.extractClassifiedAs(splitString[i], trueClasses);
+                    matrixElements.push(element);
+                    break;
+                }
+            }
+        }
+
+        const confusionMatrix: ConfusionMatrix = new ConfusionMatrix();
+        confusionMatrix.matrixElements = matrixElements;
+        return confusionMatrix;
+    }
+
+    /**
+     * Extracts the true classes from the given confusion matrix string.
+     * @param splitString - the confusion matrix split by row.
+     */
+    private static extractTrueClasses(splitString: string[]): string[] {
+        const trueClassRegExp = /(?:\w{1}\s*=\s*)(\D*(\n|$))/;
+
+        const trueClasses: string[] = [];
+
+        splitString.forEach(trueClass => {
+            const regExp: RegExp = new RegExp(trueClassRegExp);
+            const regExpResult = regExp.exec(trueClass);
+
+            if(regExpResult != null) {
+                trueClasses.push(regExpResult[1]);
+            }
+        });
+
+        return trueClasses;
+    }
+
+    /**
+     * Extracts the classified as classes and counts from the given splitString
+     * @param splitString - the string to extract the information from
+     * @param trueClasses - all available classes in the confusion matrix
+     */
+    private static extractClassifiedAs(splitString: string, trueClasses: string[]): Array<[string, number]> {
+        const classifiedAs: Array<[string, number]> = [];
+        const classifiedAsRegExp = /\d+/g;
+
+        let match;
+        let i = 0;
+        while((match = classifiedAsRegExp.exec(splitString)) != null) {
+            classifiedAs.push([trueClasses[i], Number.parseFloat(match[0])]);
+            i++;
+        }
+
+        return classifiedAs;
     }
 }

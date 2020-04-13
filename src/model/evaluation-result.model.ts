@@ -3,11 +3,11 @@
  */
 import {CrossValidationResult} from './cross-validation-result.model';
 import {DetailedAccuracy} from './detailed-accuracy.model';
+import {ConfusionMatrix} from './confusion-matrix.model';
 
 export class EvaluationResult {
     title: string;
     crossValidationResult: CrossValidationResult;
-    /** The confusion matrix */
-    confusionMatrix: string;
+    confusionMatrix: ConfusionMatrix;
     detailedAccuracy: DetailedAccuracy;
 }
