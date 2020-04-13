@@ -15,6 +15,7 @@ import {DetailedAccuracy} from '../model/detailed-accuracy.model';
 import {testConfusionMatrix1} from './test-data/testConfusionMatrix1';
 import {ConfusionMatrix} from '../model/confusion-matrix.model';
 import {testConfusionMatrix2} from './test-data/testConfusionMatrix2';
+import {testConfusionMatrix3} from "./test-data/testConfusionMatrix3";
 
 describe('WekaResultParserUtils', () => {
 
@@ -297,6 +298,77 @@ describe('WekaResultParserUtils', () => {
             }
         ];
         expect(result.matrixElements[10].classifiedAs).toEqual(expected10);
+    });
+
+    test('should extract confusion result (3)', () => {
+        const result: ConfusionMatrix = WekaResultParserUtils.extractConfusionMatrix(testConfusionMatrix3);
+        expect(result.matrixElements.length).toEqual(7);
+
+        expect(result.matrixElements[0].trueClass).toEqual('stationary');
+        const expected0 = [
+            {
+                predictedClass: 'stationary',
+                weight: 2847.55
+            },
+            {
+                predictedClass: 'walk',
+                weight: 29.33
+            },
+            {
+                predictedClass: 'bike',
+                weight: 31.42
+            },
+            {
+                predictedClass: 'car',
+                weight: 155.71
+            },
+            {
+                predictedClass: 'bus',
+                weight: 233.22
+            },
+            {
+                predictedClass: 'tram',
+                weight: 215.07
+            },
+            {
+                predictedClass: 'train',
+                weight: 256.27
+            }
+        ];
+        expect(result.matrixElements[0].classifiedAs).toEqual(expected0);
+
+        expect(result.matrixElements[6].trueClass).toEqual('train');
+        const expected6 = [
+            {
+                predictedClass: 'stationary',
+                weight: 81.13
+            },
+            {
+                predictedClass: 'walk',
+                weight: 7.06
+            },
+            {
+                predictedClass: 'bike',
+                weight: 36.45
+            },
+            {
+                predictedClass: 'car',
+                weight: 119.94
+            },
+            {
+                predictedClass: 'bus',
+                weight: 393.91
+            },
+            {
+                predictedClass: 'tram',
+                weight: 344.52
+            },
+            {
+                predictedClass: 'train',
+                weight: 2785.57
+            }
+        ];
+        expect(result.matrixElements[6].classifiedAs).toEqual(expected6);
     });
 
 });

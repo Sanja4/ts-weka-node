@@ -430,7 +430,7 @@ export class WekaResultParserUtils {
      * @param splitString - the confusion matrix split by row.
      */
     private static extractTrueClasses(splitString: string[]): string[] {
-        const trueClassRegExp = /(?:\w{1}\s*=\s*)(\D*(\n|$))/;
+        const trueClassRegExp = /(?:\w{1}\s*=\s*)(\D*(?:\n|$))/;
 
         const trueClasses: string[] = [];
 
@@ -453,7 +453,7 @@ export class WekaResultParserUtils {
      */
     private static extractClassifiedAs(splitString: string, trueClasses: string[]): Array<{predictedClass: string, weight: number}> {
         const classifiedAs: Array<{predictedClass: string, weight: number}> = [];
-        const classifiedAsRegExp = /\d+/g;
+        const classifiedAsRegExp = /(\d+\.?\d*)+/g;
 
         let match;
         let i = 0;
