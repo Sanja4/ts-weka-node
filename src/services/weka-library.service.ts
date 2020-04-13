@@ -35,18 +35,17 @@ export class WekaLibraryService {
     }
 
     public getTrainingFilePathUnbalanced(fileName: string): string {
-        return `./${this.inputDirectory}/datasets/unbalanced/${fileName}.arff`;
+        return `${this.inputDirectory}/datasets/unbalanced/${fileName}.arff`;
     }
 
     public getTrainingFilePathBalanced(fileName: string): string {
-        return `./${this.inputDirectory}/datasets/balanced/${fileName}.arff`;
+        return `${this.inputDirectory}/datasets/balanced/${fileName}.arff`;
     }
 
     /**
      * Balance
      */
     public async balanceAllDatasets(): Promise<void> {
-        console.log('balanceAllDatasets');
         // clear the old directory
         fs.emptyDirSync(this.getBalancedDatasetsDirectory());
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
