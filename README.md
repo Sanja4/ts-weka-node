@@ -1,5 +1,7 @@
 # ts-weka-node
 
+WORK IN PROGRESS
+
 ## Setup
 To use this plugin you have to ensure that: 
 1. the ```weka-3.9.3.jar``` is available in your project in this folder:
