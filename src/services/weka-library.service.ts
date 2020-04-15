@@ -12,57 +12,79 @@ const fs = require('fs-extra');
 export class WekaLibraryService {
 
     /**
-     *
-     * @param inputDirectory - the path to the input datasets
-     * @param outputDirectory - the output directory, e.g. './generated'
+     * Creates a new instance of this service
+     * @param inputDirectory - the path to the input data sets, e.g. './input'
+     * @param outputDirectory - the output directory, e.g. './output'
      * @param wekaClassPath - the path to the Weka JAR (optional, uses Weka 3.9.3 by default)
      */
-    // TODO test
     constructor(private outputDirectory: string, private inputDirectory: string, private readonly wekaClassPath?: string) {
         this.wekaClassPath = wekaClassPath != null ? wekaClassPath : `./src/bin/weka-3.9.3.jar`;
     }
 
-    public getUnbalancedDatasetsDirectory(): string {
+    /**
+     * @returns the path to the directory where the service expects the unbalanced data sets as arff files.
+     * Creates the directory if it does not exist.
+     */
+    public getUnbalancedDataSetsDirectory(): string {
         const directoryName: string = `${this.inputDirectory}/datasets/unbalanced/`;
         !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
         return directoryName;
     }
 
-    public getBalancedDatasetsDirectory(): string {
+    /**
+     * @returns the path to the directory where the service expects the balanced data sets as arff files.
+     * Creates the directory if it does not exist.
+     */
+    public getBalancedDataSetsDirectory(): string {
         const directoryName: string = `${this.inputDirectory}/datasets/balanced/`;
         !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
         return directoryName;
     }
 
     public getTrainingFilePathUnbalanced(fileName: string): string {
-        return `${this.inputDirectory}/datasets/unbalanced/${fileName}.arff`;
+        return path.join(this.getUnbalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
     }
 
     public getTrainingFilePathBalanced(fileName: string): string {
-        return `${this.inputDirectory}/datasets/balanced/${fileName}.arff`;
+
+        return path.join(this.getUnbalancedDataSetsDirectory(), this.appendArffSuffix(fileName))
     }
 
     /**
-     * Balance
+     * Balances all data sets in the directory of the
      */
-    public async balanceAllDatasets(): Promise<void> {
+    public async balanceAllDataSets(): Promise<void> {
         // clear the old directory
-        fs.emptyDirSync(this.getBalancedDatasetsDirectory());
+        fs.emptyDirSync(this.getBalancedDataSetsDirectory());
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
-        console.log('allUnbalancedDatasetFilenames', allUnbalancedDatasetFilenames);
+        console.log('File names of all unbalanced data sets', allUnbalancedDatasetFilenames);
         for (const fileName of allUnbalancedDatasetFilenames) {
             await this.balanceDataset(fileName);
         }
     }
 
+    private appendArffSuffix(fileName: string): string {
+        if(fileName.endsWith('.arff')) {
+            return fileName;
+        }
+        return `${fileName}.arff`;
+    }
+
+    /**
+     * Balances the data set in the given file using weka.filters.supervised.instance.ClassBalancer.
+     * The unbalanced (original) data set has to be in the directory provided by {@link getTrainingFilePathUnbalanced}.
+     * The class attribute has to be the last attribute in the data set (option '-c last').
+     * The balanced data set is placed in the directory provided by {@link getTrainingFilePathBalanced}.
+     * @param fileName - the file name of the ARFF data set
+     */
     public balanceDataset(fileName: string): Promise<void> {
         console.log('balanceDataset ' + fileName);
         return new Promise<void>(resolve => {
 
             // call Weka
             const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer -c last`
-                + ` -i \"${path.join(this.getUnbalancedDatasetsDirectory(), fileName)}\"`
-                + ` -o \"${path.join(this.getBalancedDatasetsDirectory(), fileName)}\"`;
+                + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
+                + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
             console.log(`Executing command ${command}`);
 
             const ls = exec(command, {maxBuffer: 1024 * 600000});
@@ -77,12 +99,14 @@ export class WekaLibraryService {
     /**
      * Learns a Random Forest
      * @param fileName - the file name of the arff file (e.g. my_arff_file)
-     * @param isArffFileBalanced - denotes whether the arff file stated in the fileName is balanced or unbalanced.
-     * @param options - GlobalWekaOptions (optional)
-     * @param randomForestOptions - RandomForestOptions (optional)
+     * @param isArffFileBalanced - if the arff file stated in the fileName is balanced or unbalanced. Defaults to false (= unbalanced).
+     * @param options - the global Weka options to use
+     * @param randomForestOptions - the random forest options to use
      */
     public learnRandomForest(fileName: string, isArffFileBalanced?: boolean, options?: GlobalWekaOptions,
                              randomForestOptions?: RandomForestOptions): Promise<RandomForestContainer> {
+
+        isArffFileBalanced = isArffFileBalanced != null ? isArffFileBalanced : false;
 
         const trainingFilePath: string = isArffFileBalanced ? this.getTrainingFilePathBalanced(
             fileName) : this.getTrainingFilePathUnbalanced(fileName);
@@ -143,7 +167,7 @@ export class WekaLibraryService {
 
     private getAllUnbalancedDatasetFilenames(): Promise<string[]> {
         return new Promise<string[]>(resolve => {
-            fs.readdir(this.getUnbalancedDatasetsDirectory(), (err, files) => {
+            fs.readdir(this.getUnbalancedDataSetsDirectory(), (err, files) => {
                 //handling error
                 if (err) {
                     return console.log('Unable to scan directory: ' + err);
@@ -162,14 +186,21 @@ export class WekaLibraryService {
     private async storeEvaluationToFile(evaluation: EvaluationResult, fileName: string): Promise<void> {
         !fs.existsSync(`${this.outputDirectory}/evaluation/`)
         && fs.mkdirSync(`${this.outputDirectory}/evaluation/`, {recursive: true});
-        const filePath: string = `${this.outputDirectory}/evaluation/classifier_evaluation_${fileName}.json`;
+        const filePath: string = `${this.outputDirectory}/evaluation/classifier_evaluation_${this.getFileNameWithoutSuffix(fileName)}.json`;
 
         fs.writeFileSync(filePath, JSON.stringify(evaluation, null, 3));
         console.log(`Saved file ${filePath}`);
     }
 
+    private getFileNameWithoutSuffix(fileName: string): string {
+        if(fileName.endsWith('.arff')){
+            return fileName.substring(0, fileName.length - 5);
+        }
+        return fileName;
+    }
+
     private async storeClassifierToFile(classifier: string, fileName: string, index: number): Promise<void> {
-        const filePath: string = `${this.outputDirectory}/classifiers/classifier_${fileName}_${String(index +
+        const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}_${String(index +
             1).padStart(3, '0')}.txt`;
 
         fs.writeFileSync(filePath, classifier);
@@ -178,7 +209,7 @@ export class WekaLibraryService {
 
     private async storeAttributeImportanceToFile(attributeImportances: AttributeImportance[],
                                                  fileName: string): Promise<void> {
-        const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${fileName}.json`;
+        const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${this.getFileNameWithoutSuffix(fileName)}.json`;
 
         fs.writeFileSync(filePath, JSON.stringify(attributeImportances));
         console.log(`Saved file ${filePath}`);
