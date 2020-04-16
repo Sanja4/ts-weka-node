@@ -15,15 +15,15 @@ export class RandomForestContainer {
     /** Time taken to test the model on the training data (in seconds)*/
     timeTakenToTestModelOnTrainingData: number;
 
+    /** Error on training data */
+    evaluationOnTrainingData: EvaluationResult;
+
+    /** The evaluation result from the cross-validation */
+    evaluationCrossValidation: EvaluationResult;
+
     /** Classifier model for the full training set */
     classifierModelFullTrainingSet: RandomForest;
 
-    /** Error on training data */
-    evaluationOnTrainingDataResult: EvaluationResult;
-
     /** Classifier model for each training fold */
     classifierModelPerFold: RandomForest[];
-
-    /** The evaluation result from the cross-validation */
-    evaluationCrossValidationResult: EvaluationResult;
 }

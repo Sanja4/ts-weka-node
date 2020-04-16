@@ -46,8 +46,7 @@ export class WekaLibraryService {
     }
 
     public getTrainingFilePathBalanced(fileName: string): string {
-
-        return path.join(this.getUnbalancedDataSetsDirectory(), this.appendArffSuffix(fileName))
+        return path.join(this.getBalancedDataSetsDirectory(), this.appendArffSuffix(fileName))
     }
 
     /**
@@ -152,7 +151,7 @@ export class WekaLibraryService {
 
                 // store the final result in files
                 await this.storeAttributeImportanceToFile(result.classifierModelFullTrainingSet.attributeImportance, fileName);
-                await this.storeEvaluationToFile(result.evaluationCrossValidationResult, fileName);
+                await this.storeEvaluationToFile(result.evaluationCrossValidation, fileName);
 
                 let i: number = 0;
                 for (const classifier of result.classifierModelFullTrainingSet.totalModel) {

@@ -7,11 +7,11 @@ import {RandomForest} from '../model/random-forest.model';
 import {WekaTreeParserUtils} from 'ts-weka/lib/weka-tree-parser.utils.';
 import {RandomTree} from '../model/random-tree.model';
 import {AttributeImportance} from '../model/attribute-importance.model';
-import {CrossValidationResult} from '../model/cross-validation-result.model';
 import {DetailedAccuracyByClass} from '../model/detailed-accuracy-by-class.model';
 import {DetailedAccuracy} from '../model/detailed-accuracy.model';
 import {ConfusionMatrix} from '../model/confusion-matrix.model';
 import {ConfusionMatrixElement} from '../model/confusion-matrix-element.model';
+import {ValidationOverview} from '../model/validation-overview.model';
 
 export class WekaResultParserUtils {
 
@@ -70,7 +70,7 @@ export class WekaResultParserUtils {
         startIndex = resultString.search(startIdentifier);
         endIndex = resultString.search(endIdentifier);
         relevantSubString = resultString.substring(startIndex, endIndex);
-        result.evaluationOnTrainingDataResult = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
+        result.evaluationOnTrainingData = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
         resultString = resultString.slice(endIndex);
 
         // CROSS VALIDATION CLASSIFIER MODELS
@@ -107,7 +107,7 @@ export class WekaResultParserUtils {
         startIdentifier = '=== Stratified cross-validation ===';
         startIndex = resultString.search(startIdentifier);
         relevantSubString = resultString.substring(startIndex);
-        result.evaluationCrossValidationResult = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
+        result.evaluationCrossValidation = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
 
         // FINISHED
         return result;
@@ -139,7 +139,7 @@ export class WekaResultParserUtils {
         startIndex = resultString.search(startIdentifier) + startIdentifier.length;
         endIndex = resultString.search(endIdentifier);
         const crossValidationResultString = resultString.substring(startIndex, endIndex);
-        result.crossValidationResult = this.extractCrossValidationResult(crossValidationResultString);
+        result.overview = this.extractCrossValidationResult(crossValidationResultString);
         resultString = resultString.slice(endIndex);
 
         // DETAILED ACCURACY BY CLASS
@@ -300,13 +300,13 @@ export class WekaResultParserUtils {
      * @param resultString - the result as string
      * @returns the result as object
      */
-    static extractCrossValidationResult(resultString: string): CrossValidationResult {
+    static extractCrossValidationResult(resultString: string): ValidationOverview {
         const crossValidationLines: string[] = resultString.split('\n');
 
         const regExp = /^(?:\D*)(\d*\.?\d*)(?:\s*)(\d*\.?\d*)+/gm;
         let regexResult;
 
-        const crossVal: CrossValidationResult = new CrossValidationResult();
+        const crossVal: ValidationOverview = new ValidationOverview();
 
         crossValidationLines.forEach(line => {
             if (line.includes('Correctly Classified Instances')) {
@@ -334,7 +334,7 @@ export class WekaResultParserUtils {
                 crossVal.rootRelativeSquaredError = Number.parseFloat(regexResult[1]);
             } else if (line.includes('Total Number of Instances')) {
                 regexResult = regExp.exec(resultString);
-                crossVal.totalNumberOfInstances = Number.parseFloat(regexResult[1]);
+                crossVal.totalWeightOfInstances = Number.parseFloat(regexResult[1]);
             }
         });
         return crossVal;
