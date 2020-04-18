@@ -92,18 +92,18 @@ export class WekaLibraryService {
     /**
      * Learns a Random Forest
      * @param fileName - the file name of the arff file (e.g. my_arff_file)
-     * @param isArffFileBalanced - if the arff file stated in the fileName is balanced or unbalanced. Defaults to false (= unbalanced).
+     * @param useBalancedArffFile - whether to use the balanced (=true) or unbalanced (=false) arff-file . Defaults to false (= unbalanced).
      * @param options - the global Weka options to use
      * @param randomForestOptions - the random forest options to use
      * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
      */
-    public learnRandomForest(fileName: string, isArffFileBalanced?: boolean, options?: GlobalWekaOptions,
+    public learnRandomForest(fileName: string, useBalancedArffFile?: boolean, options?: GlobalWekaOptions,
                              randomForestOptions?: RandomForestOptions,
                              enableLogging?: boolean): Promise<RandomForestContainer> {
 
-        isArffFileBalanced = isArffFileBalanced != null ? isArffFileBalanced : false;
+        useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
 
-        const trainingFilePath: string = isArffFileBalanced ? this.getTrainingFilePathBalanced(
+        const trainingFilePath: string = useBalancedArffFile ? this.getTrainingFilePathBalanced(
             fileName) : this.getTrainingFilePathUnbalanced(fileName);
 
         if(options == null) {
