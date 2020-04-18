@@ -63,7 +63,7 @@ export class WekaLibraryService {
     }
 
     private appendArffSuffix(fileName: string): string {
-        if(fileName.endsWith('.arff')) {
+        if (fileName.endsWith('.arff')) {
             return fileName;
         }
         return `${fileName}.arff`;
@@ -101,9 +101,10 @@ export class WekaLibraryService {
      * @param isArffFileBalanced - if the arff file stated in the fileName is balanced or unbalanced. Defaults to false (= unbalanced).
      * @param options - the global Weka options to use
      * @param randomForestOptions - the random forest options to use
+     * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
      */
     public learnRandomForest(fileName: string, isArffFileBalanced?: boolean, options?: GlobalWekaOptions,
-                             randomForestOptions?: RandomForestOptions): Promise<RandomForestContainer> {
+                             randomForestOptions?: RandomForestOptions, enableLogging?: boolean): Promise<RandomForestContainer> {
 
         isArffFileBalanced = isArffFileBalanced != null ? isArffFileBalanced : false;
 
@@ -139,6 +140,9 @@ export class WekaLibraryService {
             });
 
             ls.on('close', async (code) => {
+                if (enableLogging) {
+                    console.log(stdoutData);
+                }
                 console.log(`Child process exited with code ${code}`);
                 const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData);
 
@@ -192,7 +196,7 @@ export class WekaLibraryService {
     }
 
     private getFileNameWithoutSuffix(fileName: string): string {
-        if(fileName.endsWith('.arff')){
+        if (fileName.endsWith('.arff')) {
             return fileName.substring(0, fileName.length - 5);
         }
         return fileName;
