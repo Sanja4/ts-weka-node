@@ -17,7 +17,8 @@ export class WekaLibraryService {
      * @param outputDirectory - the output directory, e.g. './output'
      * @param wekaClassPath - the path to the Weka JAR (optional, uses Weka 3.9.3 by default)
      */
-    constructor(private outputDirectory: string, private inputDirectory: string, private readonly wekaClassPath?: string) {
+    constructor(private outputDirectory: string, private inputDirectory: string,
+                private readonly wekaClassPath?: string) {
         this.wekaClassPath = wekaClassPath != null ? wekaClassPath : `./src/bin/weka-3.9.3.jar`;
     }
 
@@ -57,16 +58,9 @@ export class WekaLibraryService {
         fs.emptyDirSync(this.getBalancedDataSetsDirectory());
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
         console.log('File names of all unbalanced data sets', allUnbalancedDatasetFilenames);
-        for (const fileName of allUnbalancedDatasetFilenames) {
+        for(const fileName of allUnbalancedDatasetFilenames) {
             await this.balanceDataset(fileName);
         }
-    }
-
-    private appendArffSuffix(fileName: string): string {
-        if (fileName.endsWith('.arff')) {
-            return fileName;
-        }
-        return `${fileName}.arff`;
     }
 
     /**
@@ -88,7 +82,7 @@ export class WekaLibraryService {
 
             const ls = exec(command, {maxBuffer: 1024 * 600000});
 
-            ls.on('close', async (code) => {
+            ls.on('close', async(code) => {
                 console.log(`Child process exited with code ${code}`);
                 resolve();
             });
@@ -104,17 +98,18 @@ export class WekaLibraryService {
      * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
      */
     public learnRandomForest(fileName: string, isArffFileBalanced?: boolean, options?: GlobalWekaOptions,
-                             randomForestOptions?: RandomForestOptions, enableLogging?: boolean): Promise<RandomForestContainer> {
+                             randomForestOptions?: RandomForestOptions,
+                             enableLogging?: boolean): Promise<RandomForestContainer> {
 
         isArffFileBalanced = isArffFileBalanced != null ? isArffFileBalanced : false;
 
         const trainingFilePath: string = isArffFileBalanced ? this.getTrainingFilePathBalanced(
             fileName) : this.getTrainingFilePathUnbalanced(fileName);
 
-        if (options == null) {
+        if(options == null) {
             options = new GlobalWekaOptions();
         }
-        if (randomForestOptions == null) {
+        if(randomForestOptions == null) {
             randomForestOptions = new RandomForestOptions();
         }
 
@@ -139,8 +134,8 @@ export class WekaLibraryService {
                 console.error(`stderr: ${data}`);
             });
 
-            ls.on('close', async (code) => {
-                if (enableLogging) {
+            ls.on('close', async(code) => {
+                if(enableLogging) {
                     console.log(stdoutData);
                 }
                 console.log(`Child process exited with code ${code}`);
@@ -158,7 +153,7 @@ export class WekaLibraryService {
                 await this.storeEvaluationToFile(result.evaluationCrossValidation, fileName);
 
                 let i: number = 0;
-                for (const classifier of result.classifierModelFullTrainingSet.totalModel) {
+                for(const classifier of result.classifierModelFullTrainingSet.totalModel) {
                     await this.storeClassifierToFile(classifier.classifier, fileName, i);
                     i++;
                 }
@@ -168,15 +163,22 @@ export class WekaLibraryService {
         });
     }
 
+    private appendArffSuffix(fileName: string): string {
+        if(fileName.endsWith('.arff')) {
+            return fileName;
+        }
+        return `${fileName}.arff`;
+    }
+
     private getAllUnbalancedDatasetFilenames(): Promise<string[]> {
         return new Promise<string[]>(resolve => {
             fs.readdir(this.getUnbalancedDataSetsDirectory(), (err, files) => {
                 //handling error
-                if (err) {
+                if(err) {
                     return console.log('Unable to scan directory: ' + err);
                 }
                 //listing all files using forEach
-                files.forEach(function (file) {
+                files.forEach(function(file) {
                     // Do whatever you want to do with the file
                     console.log(file);
                 });
@@ -196,14 +198,15 @@ export class WekaLibraryService {
     }
 
     private getFileNameWithoutSuffix(fileName: string): string {
-        if (fileName.endsWith('.arff')) {
+        if(fileName.endsWith('.arff')) {
             return fileName.substring(0, fileName.length - 5);
         }
         return fileName;
     }
 
     private async storeClassifierToFile(classifier: string, fileName: string, index: number): Promise<void> {
-        const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}_${String(index +
+        const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}_${String(index
+            +
             1).padStart(3, '0')}.txt`;
 
         fs.writeFileSync(filePath, classifier);
