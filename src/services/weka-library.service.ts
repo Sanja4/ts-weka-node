@@ -80,7 +80,11 @@ export class WekaLibraryService {
                 + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
             console.log(`Executing command ${command}`);
 
-            const ls = exec(command, {maxBuffer: 1024 * 600000});
+            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer, stderr: Buffer) => {
+                if(error) {
+                    console.error(error);
+                }
+            });
 
             ls.on('close', async(code) => {
                 console.log(`Child process exited with code ${code}`);
