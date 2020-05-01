@@ -1,6 +1,6 @@
 {
   "name": "ts-weka-node",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Weka helper package for node servers",
   "scripts": {
     "build": "tsc",

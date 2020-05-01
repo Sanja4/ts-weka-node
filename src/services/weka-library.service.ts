@@ -5,6 +5,7 @@ import {GlobalWekaOptions} from '../model/global-weka-options.model';
 import {RandomForestOptions} from '../model/random-forest-options.model';
 import {EvaluationResult} from '../model/evaluation-result.model';
 import {AttributeImportance} from '../model/attribute-importance.model';
+import {ExecException} from "child_process";
 
 const exec = require('child_process').exec;
 const fs = require('fs-extra');
@@ -129,7 +130,11 @@ export class WekaLibraryService {
 
             let stdoutData: string = '';
 
-            const ls = exec(command, {maxBuffer: 1024 * 600000});
+            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer, stderr: Buffer) => {
+                if(error) {
+                    console.error(error);
+                }
+            });
 
             ls.stdout.on('data', (data) => {
                 stdoutData += data;
