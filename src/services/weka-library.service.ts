@@ -15,11 +15,10 @@ export class WekaLibraryService {
      * Creates a new instance of this service
      * @param inputDirectory - the path to the input data sets, e.g. './input'
      * @param outputDirectory - the output directory, e.g. './output'
-     * @param wekaClassPath - the path to the Weka JAR (optional, uses Weka 3.9.3 by default)
+     * @param wekaClassPath - the path to the Weka JAR, e.g. `./src/bin/weka-3.9.3.jar`
      */
     constructor(private outputDirectory: string, private inputDirectory: string,
-                private readonly wekaClassPath?: string) {
-        this.wekaClassPath = wekaClassPath != null ? wekaClassPath : `./src/bin/weka-3.9.3.jar`;
+                private wekaClassPath: string) {
     }
 
     /**
@@ -72,7 +71,7 @@ export class WekaLibraryService {
      */
     public balanceDataset(fileName: string): Promise<void> {
         console.log('balanceDataset ' + fileName);
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve, reject) => {
 
             // call Weka
             const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer -c last`
@@ -84,6 +83,11 @@ export class WekaLibraryService {
 
             ls.on('close', async(code) => {
                 console.log(`Child process exited with code ${code}`);
+                if(code != 0) {
+                    return reject(`Balancing failed. Child process exited with code ${code}.`);
+                }
+
+
                 resolve();
             });
         });
@@ -109,11 +113,12 @@ export class WekaLibraryService {
         if(options == null) {
             options = new GlobalWekaOptions();
         }
+
         if(randomForestOptions == null) {
             randomForestOptions = new RandomForestOptions();
         }
 
-        return new Promise<RandomForestContainer>(resolve => {
+        return new Promise<RandomForestContainer>((resolve, reject) => {
             // call Weka
             const command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest -t \"${trainingFilePath}\"`
                 +
@@ -139,6 +144,11 @@ export class WekaLibraryService {
                     console.log(stdoutData);
                 }
                 console.log(`Child process exited with code ${code}`);
+
+                if(code != 0) {
+                    return reject(`Learning failed. Child process exited with code ${code}.`);
+                }
+
                 const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData);
 
                 !fs.existsSync(`${this.outputDirectory}/attributeImportance/`)
