@@ -8,7 +8,7 @@ import {AttributeImportance} from '../model/attribute-importance.model';
 import {ExecException} from 'child_process';
 
 const exec = require('child_process').exec;
-const fs = require('fs-extra');
+import * as fs from 'fs-extra';
 
 export class WekaLibraryService {
 
