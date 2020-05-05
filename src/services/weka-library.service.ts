@@ -167,7 +167,7 @@ export class WekaLibraryService {
                 !fs.existsSync(`${this.outputDirectory}/full/`) &&
                 fs.mkdirSync(`${this.outputDirectory}/full/`, {recursive: true});
 
-                fs.writeFileSync(`${this.outputDirectory}/full/output_random_forest.txt`, stdoutData);
+                fs.writeFileSync(`${this.outputDirectory}/full/RandomForest_${this.getFileNameWithoutSuffix(fileName)}.txt`, stdoutData);
 
                 const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData);
 
