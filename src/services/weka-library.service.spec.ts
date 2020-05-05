@@ -31,6 +31,13 @@ describe('WekaLibraryService', () => {
         expect(result).toEqual('input\\datasets\\balanced\\test_dataset.arff');
     });
 
+    test('should balance a dataset', async () => {
+        await serviceUnderTest.balanceDataset('test_dataset.arff');
+        const fileContent: string = await fs.readFileSync(await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff'), {encoding: 'utf-8'});
+        const fileContentPerLine: string[] = fileContent.split('\n');
+        expect(fileContentPerLine[0]).toEqual('@relation CustomDataset');
+    });
+
     test('should balance all datasets', async () => {
         await serviceUnderTest.balanceAllDataSets();
         const fileContent: string = await fs.readFileSync(await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff'), {encoding: 'utf-8'});
