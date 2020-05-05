@@ -5,7 +5,7 @@ import {GlobalWekaOptions} from '../model/global-weka-options.model';
 import {RandomForestOptions} from '../model/random-forest-options.model';
 import {EvaluationResult} from '../model/evaluation-result.model';
 import {AttributeImportance} from '../model/attribute-importance.model';
-import {ExecException} from "child_process";
+import {ExecException} from 'child_process';
 
 const exec = require('child_process').exec;
 const fs = require('fs-extra');
@@ -75,12 +75,14 @@ export class WekaLibraryService {
         return new Promise<void>((resolve, reject) => {
 
             // call Weka
-            const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer -c last`
-                + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
-                + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+            const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
+                                    +` -c last`
+                                    + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
+                                    + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
             console.log(`Executing command ${command}`);
 
-            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer, stderr: Buffer) => {
+            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer,
+                                                                  stderr: Buffer) => {
                 if(error) {
                     console.error(error);
                 }
@@ -91,7 +93,6 @@ export class WekaLibraryService {
                 if(code != 0) {
                     return reject(`Balancing failed. Child process exited with code ${code}.`);
                 }
-
 
                 resolve();
             });
@@ -125,16 +126,20 @@ export class WekaLibraryService {
 
         return new Promise<RandomForestContainer>((resolve, reject) => {
             // call Weka
-            const command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest -t \"${trainingFilePath}\"`
-                +
-                ` -num-slots ${options.numberOfSlots} -x ${options.numberOfFolds} -I ${randomForestOptions.numberOfIterations} -M ${randomForestOptions.minNumberOfInstances} -depth ${randomForestOptions.depth}`
-                +
-                ` -output-models-for-training-splits -print -attribute-importance`;
+            const command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest`
+                                    + ` -t \"${trainingFilePath}\"`
+                                    + ` -num-slots ${options.numberOfSlots}`
+                                    + ` -x ${options.numberOfFolds}`
+                                    + ` -I ${randomForestOptions.numberOfIterations}`
+                                    + ` -M ${randomForestOptions.minNumberOfInstances}`
+                                    + ` -depth ${randomForestOptions.depth}`
+                                    + ` -output-models-for-training-splits -print -attribute-importance`;
             console.log(`Executing command ${command}`);
 
             let stdoutData: string = '';
 
-            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer, stderr: Buffer) => {
+            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer,
+                                                                  stderr: Buffer) => {
                 if(error) {
                     console.error(error);
                 }
@@ -158,6 +163,12 @@ export class WekaLibraryService {
                     return reject(`Learning failed. Child process exited with code ${code}.`);
                 }
 
+                // store the full result to a file
+                !fs.existsSync(`${this.outputDirectory}/full/`) &&
+                fs.mkdirSync(`${this.outputDirectory}/full/`, {recursive: true});
+
+                fs.writeFileSync(`${this.outputDirectory}/full/output_random_forest.txt`, stdoutData);
+
                 const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData);
 
                 !fs.existsSync(`${this.outputDirectory}/attributeImportance/`)
@@ -166,6 +177,7 @@ export class WekaLibraryService {
                 && fs.mkdirSync(`${this.outputDirectory}/evaluation/`, {recursive: true});
                 !fs.existsSync(`${this.outputDirectory}/classifiers/`) &&
                 fs.mkdirSync(`${this.outputDirectory}/classifiers/`, {recursive: true});
+
 
                 // store the final result in files
                 await this.storeAttributeImportanceToFile(result.classifierModelFullTrainingSet.attributeImportance, fileName);
@@ -225,8 +237,9 @@ export class WekaLibraryService {
 
     private async storeClassifierToFile(classifier: string, fileName: string, index: number): Promise<void> {
         const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}_${String(index
-            +
-            1).padStart(3, '0')}.txt`;
+                                                                                                                                     +
+                                                                                                                                     1)
+            .padStart(3, '0')}.txt`;
 
         fs.writeFileSync(filePath, classifier);
         console.log(`Saved file ${filePath}`);
