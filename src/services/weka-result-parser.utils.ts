@@ -67,7 +67,7 @@ export class WekaResultParserUtils {
 
         // Error on training data
         startIdentifier = '=== Error on training data ===';
-        endIdentifier = '=== Classifier model';
+        endIdentifier = 'Time taken to perform cross-validation: ';
         startIndex = resultString.search(startIdentifier);
         endIndex = resultString.search(endIdentifier);
         relevantSubString = resultString.substring(startIndex, endIndex);
