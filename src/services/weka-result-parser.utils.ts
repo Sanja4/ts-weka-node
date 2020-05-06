@@ -74,27 +74,7 @@ export class WekaResultParserUtils {
         result.evaluationOnTrainingData = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
         resultString = resultString.slice(endIndex);
 
-        // CROSS VALIDATION CLASSIFIER MODELS
-        result.classifierModelPerFold = [];
-
-        while (resultString.includes(startIdentifier)) {
-            resultString = this.removeLeadingLineBreaks(resultString);
-            startIdentifier = '=== Classifier model';
-            endIdentifier = '\n\n=== Classifier model';
-
-            startIndex = resultString.search(startIdentifier);
-            endIndex = resultString.search(endIdentifier);
-
-            if (endIndex == -1) {
-                // last fold
-                endIdentifier = 'Time taken to perform cross-validation';
-                endIndex = resultString.search(endIdentifier);
-            }
-
-            relevantSubString = resultString.substring(startIndex, endIndex);
-            result.classifierModelPerFold.push(WekaResultParserUtils.parseRandomForestClassifierResult(relevantSubString));
-            resultString = resultString.slice(endIndex);
-        }
+        // CROSS VALIDATION CLASSIFIER MODELS (skipped)
 
         // TIME TAKEN FOR CROSS-VALIDATION
         startIdentifier = 'Time taken to perform cross-validation: ';

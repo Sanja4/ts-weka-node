@@ -133,7 +133,7 @@ export class WekaLibraryService {
                                     + ` -I ${randomForestOptions.numberOfIterations}`
                                     + ` -M ${randomForestOptions.minNumberOfInstances}`
                                     + ` -depth ${randomForestOptions.depth}`
-                                    + ` -output-models-for-training-splits -print -attribute-importance`;
+                                    + ` -print -attribute-importance`;
             console.log(`Executing command ${command}`);
 
             let stdoutData: string = '';
