@@ -22,6 +22,7 @@ export class WekaResultParserUtils {
      */
     public static parseRandomForestResult(resultString: string): RandomForestContainer {
         const result: RandomForestContainer = new RandomForestContainer();
+        result.wekaOutput = resultString;
         let startIdentifier: string;
         let endIdentifier: string;
         let startIndex: number;

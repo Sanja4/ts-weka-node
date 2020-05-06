@@ -26,4 +26,7 @@ export class RandomForestContainer {
 
     /** Classifier model for each training fold */
     classifierModelPerFold: RandomForest[];
+
+    /** The full output of Weka. */
+    wekaOutput: string;
 }
