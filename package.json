@@ -1,6 +1,6 @@
 {
   "name": "ts-weka-node",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "description": "Weka helper package for node servers",
   "scripts": {
     "build": "tsc",
@@ -24,7 +24,7 @@
   "dependencies": {
     "@types/fs-extra": "^8.1.0",
     "fs-extra": "^9.0.0",
-    "ts-weka": "0.0.4"
+    "ts-weka": "0.0.5"
   },
   "devDependencies": {
     "@types/color-name": "^1.1.1",
