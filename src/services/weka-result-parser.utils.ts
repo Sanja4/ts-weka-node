@@ -20,9 +20,14 @@ export class WekaResultParserUtils {
      * @param resultString - the result as string (the same that can be seen in the GUI)
      * @returns the result as an object
      */
-    public static parseRandomForestResult(resultString: string): RandomForestContainer {
+    public static parseRandomForestResult(resultString: string, includeWekaOutput: boolean): RandomForestContainer {
+
         const result: RandomForestContainer = new RandomForestContainer();
-        result.wekaOutput = resultString;
+
+        if(includeWekaOutput) {
+            result.wekaOutput = resultString;
+        }
+
         let startIdentifier: string;
         let endIdentifier: string;
         let startIndex: number;

@@ -106,10 +106,16 @@ export class WekaLibraryService {
      * @param options - the global Weka options to use
      * @param randomForestOptions - the random forest options to use
      * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
+     * @param includeWekaOutput - if {@link RandomForestContainer.wekaOutput} should be included in the result
      */
     public learnRandomForest(fileName: string, useBalancedArffFile?: boolean, options?: GlobalWekaOptions,
                              randomForestOptions?: RandomForestOptions,
-                             enableLogging?: boolean): Promise<RandomForestContainer> {
+                             enableLogging?: boolean,
+                             includeWekaOutput?: boolean): Promise<RandomForestContainer> {
+
+        if(includeWekaOutput == null) {
+            includeWekaOutput = false;
+        }
 
         useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
 
@@ -169,7 +175,7 @@ export class WekaLibraryService {
 
                 fs.writeFileSync(`${this.outputDirectory}/full/RandomForest_${this.getFileNameWithoutSuffix(fileName)}.txt`, stdoutData);
 
-                const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData);
+                const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData, includeWekaOutput);
 
                 !fs.existsSync(`${this.outputDirectory}/attributeImportance/`)
                 && fs.mkdirSync(`${this.outputDirectory}/attributeImportance/`, {recursive: true});

@@ -20,7 +20,7 @@ import {ValidationOverview} from '../model/validation-overview.model';
 describe('WekaResultParserUtils', () => {
 
     test('should convert result', () => {
-        const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(testResultString);
+        const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(testResultString, false);
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
         expect(result.timeTakenToPerformCrossValidation).toEqual(0.6);
