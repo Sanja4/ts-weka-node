@@ -85,6 +85,10 @@ export class WekaLibraryService {
                                                                   stderr: Buffer) => {
                 if(error) {
                     console.error(error);
+                    return reject(error);
+                } else if(stderr) {
+                    console.error(stderr);
+                    return reject(stderr);
                 }
             });
 
