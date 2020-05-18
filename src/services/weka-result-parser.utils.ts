@@ -396,7 +396,10 @@ export class WekaResultParserUtils {
 
         for (let i = 0; i < splitString.length; i++) {
             for (let j = 0; j < trueClasses.length; j++) {
-                if (splitString[i].includes(trueClasses[j])) {
+                const classifiedAs = [];
+                classifiedAs.push(splitString[i]);
+                const classifiedAsExtracted = this.extractTrueClasses(classifiedAs);
+                if (classifiedAsExtracted.includes(trueClasses[j])) {
                     const element: ConfusionMatrixElement = new ConfusionMatrixElement();
                     element.trueClass = trueClasses[j];
                     element.classifiedAs = this.extractClassifiedAs(splitString[i], trueClasses);
