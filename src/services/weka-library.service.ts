@@ -6,9 +6,10 @@ import {RandomForestOptions} from '../model/random-forest-options.model';
 import {EvaluationResult} from '../model/evaluation-result.model';
 import {AttributeImportance} from '../model/attribute-importance.model';
 import {ExecException} from 'child_process';
+import * as fs from 'fs-extra';
+import {ResampleOptions} from '../model/resample-options.model';
 
 const exec = require('child_process').exec;
-import * as fs from 'fs-extra';
 
 export class WekaLibraryService {
 
@@ -53,13 +54,23 @@ export class WekaLibraryService {
     /**
      * Balances all data sets in the directory of the
      */
-    public async balanceAllDataSets(): Promise<void> {
+    public async balanceAllDataSetsUsingClassBalancer(): Promise<void> {
         // clear the old directory
         fs.emptyDirSync(this.getBalancedDataSetsDirectory());
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
         console.log('File names of all unbalanced data sets', allUnbalancedDatasetFilenames);
         for(const fileName of allUnbalancedDatasetFilenames) {
-            await this.balanceDataset(fileName);
+            await this.balanceDatasetUsingClassBalancer(fileName);
+        }
+    }
+
+    public async resampleAllDataSets(resampleOptions: ResampleOptions): Promise<void> {
+        // clear the old directory
+        fs.emptyDirSync(this.getBalancedDataSetsDirectory());
+        const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
+        console.log('File names of all unbalanced data sets', allUnbalancedDatasetFilenames);
+        for(const fileName of allUnbalancedDatasetFilenames) {
+            await this.resampleDataset(fileName, resampleOptions);
         }
     }
 
@@ -70,37 +81,35 @@ export class WekaLibraryService {
      * The balanced data set is placed in the directory provided by {@link getTrainingFilePathBalanced}.
      * @param fileName - the file name of the ARFF data set
      */
-    public balanceDataset(fileName: string): Promise<void> {
-        console.log('balanceDataset ' + fileName);
-        return new Promise<void>((resolve, reject) => {
+    public async balanceDatasetUsingClassBalancer(fileName: string): Promise<void> {
+        console.log('balanceDatasetUsingClassBalancer ' + fileName);
 
-            // call Weka
-            const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
-                                    +` -c last`
-                                    + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
-                                    + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
-            console.log(`Executing command ${command}`);
 
-            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer,
-                                                                  stderr: Buffer) => {
-                if(error) {
-                    console.error(error);
-                    return reject(error);
-                } else if(stderr) {
-                    console.error(stderr);
-                    return reject(stderr);
-                }
-            });
+        // call Weka
+        const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
+                                + ` -c last`
+                                + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
+                                + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+        console.log(`Executing command ${command}`);
 
-            ls.on('close', async(code) => {
-                console.log(`Child process exited with code ${code}`);
-                if(code != 0) {
-                    return reject(`Balancing failed. Child process exited with code ${code}.`);
-                }
+        await this.executeCommand(command);
+    }
 
-                resolve();
-            });
-        });
+    public async resampleDataset(fileName: string, resampleOptions: ResampleOptions): Promise<void> {
+        console.log('resampleDataset ' + fileName);
+        // call Weka
+        let command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.Resample`
+                              + ` -S ${resampleOptions.seed}`
+                              + ` -Z ${resampleOptions.sizeOutputDataset}`
+                              + ` -B ${resampleOptions.biasFactor}`
+                              + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
+                              + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+
+        if(resampleOptions.noReplacement) {
+            command += +` -no-replacement}`;
+        }
+
+        await this.executeCommand(command);
     }
 
     /**
@@ -200,6 +209,32 @@ export class WekaLibraryService {
                 }
 
                 resolve(result);
+            });
+        });
+    }
+
+    private executeCommand(command: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            console.log(`Executing command ${command}`);
+
+            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer,
+                                                                  stderr: Buffer) => {
+                if(error) {
+                    console.error(error);
+                    return reject(error);
+                } else if(stderr) {
+                    console.error(stderr);
+                    return reject(stderr);
+                }
+            });
+
+            ls.on('close', async(code) => {
+                console.log(`Child process exited with code ${code}`);
+                if(code != 0) {
+                    return reject(`Command failed. Child process exited with code ${code}.`);
+                }
+
+                resolve();
             });
         });
     }

@@ -32,7 +32,7 @@ describe('WekaLibraryService', () => {
     });
 
     test('should balance a dataset', async() => {
-        await serviceUnderTest.balanceDataset('test_dataset.arff');
+        await serviceUnderTest.balanceDatasetUsingClassBalancer('test_dataset.arff');
         const fileContent: string = await fs.readFileSync(await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff'), {encoding: 'utf-8'});
         const fileContentPerLine: string[] = fileContent.split('\n');
         // TODO
@@ -40,7 +40,7 @@ describe('WekaLibraryService', () => {
     });
 
     test('should balance all datasets', async() => {
-        await serviceUnderTest.balanceAllDataSets();
+        await serviceUnderTest.balanceAllDataSetsUsingClassBalancer();
         const fileContent: string = await fs.readFileSync(await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff'), {encoding: 'utf-8'});
         const fileContentPerLine: string[] = fileContent.split('\n');
         // TODO
