@@ -160,12 +160,9 @@ export class WekaLibraryService {
             command += ` -x ${generalOptions.x}`;
         }
 
-
         const output: string = await this.executeCommand(command);
 
-        // TODO parse the output (different with and without cross validation (-x))
-
-        return WekaResultParserUtils.extractAttributeSelectionResult(output);
+        return WekaResultParserUtils.extractAttributeSelectionResult(output, generalOptions.x != null);
     }
 
     /**

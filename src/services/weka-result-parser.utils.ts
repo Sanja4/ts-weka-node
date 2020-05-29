@@ -472,12 +472,16 @@ export class WekaResultParserUtils {
         return classifiedAs;
     }
 
-    static extractAttributeSelectionResult(contentToParse: string): AttributeSelectionResult {
+    static extractAttributeSelectionResult(contentToParse: string, isGeneralOptionsXSet: boolean): AttributeSelectionResult {
         const attributeSelectionResult: AttributeSelectionResult = new AttributeSelectionResult();
+
         attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
         attributeSelectionResult.attributeSubsetEvaluator = this.extractAttributeSelectionAttributeSubsetEvaluator(contentToParse);
-        attributeSelectionResult.selectedAttributes = this.extractAttributeSelectionSelectedAttributes(contentToParse);
-        attributeSelectionResult.crossValidationResult = this.extractAttributeSelectionCrossValidationResults(contentToParse);
+        attributeSelectionResult.selectedAttributes = this.extractAttributeSelectionSelectedAttributes(contentToParse,
+            isGeneralOptionsXSet);
+        if(isGeneralOptionsXSet) {
+            attributeSelectionResult.crossValidationResult = this.extractAttributeSelectionCrossValidationResults(contentToParse);
+        }
 
         return attributeSelectionResult;
     }
@@ -541,7 +545,7 @@ export class WekaResultParserUtils {
         return contentToParse.substring(startIndex, endIndex);
     }
 
-    private static extractAttributeSelectionSelectedAttributes(contentToParse: string): SelectedAttributes {
+    private static extractAttributeSelectionSelectedAttributes(contentToParse: string, isGeneralOptionsXSet: boolean): SelectedAttributes {
         const attributeIndexes: number[] = [];
         let numberOfAttributes: number = -Infinity;
         const attributeNames: string[] = [];
@@ -557,7 +561,11 @@ export class WekaResultParserUtils {
         regExResult = regEx.exec(contentToParse);
         numberOfAttributes = Number.parseFloat(regExResult[1]);
 
-        regEx = /(?:\s:\s\d*\n)((.|\n)*)/g;
+        if(isGeneralOptionsXSet) {
+            regEx = /(?:\s:\s\d*\n)((.|\n)*\n)(?:\n\n)/g;
+        } else {
+            regEx = /(?:\s:\s\d*\n)((.|\n)*)/g;
+        }
         regExResult = regEx.exec(contentToParse);
         raw = regExResult[1];
         raw.split('\n').forEach(line => {
