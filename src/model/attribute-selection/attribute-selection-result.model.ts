@@ -1,24 +1,13 @@
+import {SearchMethod} from './search-method.model';
+import {SelectedAttributes} from './selected-attributes.model';
+import {CrossValidationResult} from './cross-validation-result.model';
+
 export class AttributeSelectionResult {
-    searchMethod: {
-        name: string;
-        startSet: string;
-        direction: string;
-        additionalInfo: string;
-        totalNumberOfSubsetsEvaluated: number;
-        meritOfBestSubsetFound: number;
-    };
+    searchMethod: SearchMethod;
+
     attributeSubsetEvaluator: string;
-    selectedAttributes: {
-        attributeIndexes: number[];
-        numberOfAttributes: number;
-        attributeNames: string[];
-    };
-    crossValidationResults: Array<{
 
-        attributeIndex: number;
-        attributeName: string;
-        numberOfFolds: number;
-        percentageOfFolds: number;
-    }>;
+    selectedAttributes: SelectedAttributes;
 
+    crossValidationResults: CrossValidationResult[];
 }

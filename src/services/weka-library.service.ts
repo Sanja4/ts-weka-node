@@ -12,6 +12,7 @@ import {RandomForestOptions} from '../model/options/random-forest-options.model'
 import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
 import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
+import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 
 const exec = require('child_process').exec;
 
@@ -52,7 +53,7 @@ export class WekaLibraryService {
     }
 
     public getTrainingFilePathBalanced(fileName: string): string {
-        return path.join(this.getBalancedDataSetsDirectory(), this.appendArffSuffix(fileName))
+        return path.join(this.getBalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
     }
 
     /**
@@ -90,9 +91,9 @@ export class WekaLibraryService {
 
         // call Weka
         const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
-                                + ` -c last`
-                                + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
-                                + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+            + ` -c last`
+            + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
+            + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
         console.log(`Executing command ${command}`);
 
         await this.executeCommand(command);
@@ -102,12 +103,12 @@ export class WekaLibraryService {
         console.log('resampleDataset ' + fileName);
         // call Weka
         let command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.Resample`
-                              + ` -c last`
-                              + ` -S ${resampleOptions.seed}`
-                              + ` -Z ${resampleOptions.sizeOutputDataset}`
-                              + ` -B ${resampleOptions.biasFactor}`
-                              + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
-                              + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+            + ` -c last`
+            + ` -S ${resampleOptions.seed}`
+            + ` -Z ${resampleOptions.sizeOutputDataset}`
+            + ` -B ${resampleOptions.biasFactor}`
+            + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
+            + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
 
         if(resampleOptions.noReplacement) {
             command += +` -no-replacement`;
@@ -131,13 +132,13 @@ export class WekaLibraryService {
         return await evaluator(evaluatorOptions);
     }
 
-    public async performCfsSubsetEval(options: CfsSubsetEvalOptions, generalOptions: GeneralOptions): Promise<string> {
+    public async performCfsSubsetEval(options: CfsSubsetEvalOptions, generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
         let command: string = `java -classpath \"${this.wekaClassPath}\" weka.attributeSelection.CfsSubsetEval`
-                              + ` -s \"${options.s}\"`
-                              + ` -P ${options.P}`
-                              + ` -E ${options.E}`
-                              + ` -i \"${generalOptions.i}\"`
-                              + ` -c last`;
+            + ` -s \"${options.s}\"`
+            + ` -P ${options.P}`
+            + ` -E ${options.E}`
+            + ` -i \"${generalOptions.i}\"`
+            + ` -c last`;
 
         if(options.M) {
             command += +` -M`;
@@ -160,12 +161,11 @@ export class WekaLibraryService {
         }
 
 
-
         const output: string = await this.executeCommand(command);
 
         // TODO parse the output (different with and without cross validation (-x))
 
-        return output;
+        return WekaResultParserUtils.extractAttributeSelectionResult(output);
     }
 
     /**
@@ -209,15 +209,15 @@ export class WekaLibraryService {
         return new Promise<RandomForestContainer>((resolve, reject) => {
             // call Weka
             let command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest`
-                                    + ` -t \"${trainingFilePath}\"`
-                                    + ` -num-slots ${options.numSlots}`
-                                    + ` -I ${randomForestOptions.numberOfIterations}`
-                                    + ` -M ${randomForestOptions.minNumberOfInstances}`
-                                    + ` -depth ${randomForestOptions.depth}`
-                                    + ` -print -attribute-importance`;
+                + ` -t \"${trainingFilePath}\"`
+                + ` -num-slots ${options.numSlots}`
+                + ` -I ${randomForestOptions.numberOfIterations}`
+                + ` -M ${randomForestOptions.minNumberOfInstances}`
+                + ` -depth ${randomForestOptions.depth}`
+                + ` -print -attribute-importance`;
 
             if(generalOptions.x != null) {
-                command +=  ` -x ${generalOptions.x}`;
+                command += ` -x ${generalOptions.x}`;
             }
 
             console.log(`Executing command ${command}`);
@@ -357,8 +357,8 @@ export class WekaLibraryService {
 
     private async storeClassifierToFile(classifier: string, fileName: string, index: number): Promise<void> {
         const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}_${String(index
-                                                                                                                                     +
-                                                                                                                                     1)
+            +
+            1)
             .padStart(3, '0')}.txt`;
 
         fs.writeFileSync(filePath, classifier);
@@ -367,7 +367,8 @@ export class WekaLibraryService {
 
     private async storeAttributeImportanceToFile(attributeImportances: AttributeImportance[],
                                                  fileName: string): Promise<void> {
-        const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${this.getFileNameWithoutSuffix(fileName)}.json`;
+        const filePath: string = `${this.outputDirectory}/attributeImportance/classifier_attributeImportance_${this.getFileNameWithoutSuffix(
+            fileName)}.json`;
 
         fs.writeFileSync(filePath, JSON.stringify(attributeImportances));
         console.log(`Saved file ${filePath}`);

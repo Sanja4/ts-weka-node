@@ -13,6 +13,8 @@ import {DetailedAccuracy} from '../model/evaluation/detailed-accuracy.model';
 import {ConfusionMatrixElement} from '../model/evaluation/confusion-matrix-element.model';
 import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
 import {RandomTree} from '../model/classifiers/random-tree.model';
+import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
+import {SearchMethod} from '../model/attribute-selection/search-method.model';
 
 export class WekaResultParserUtils {
 
@@ -283,6 +285,14 @@ export class WekaResultParserUtils {
         return s;
     }
 
+    private static removeLeadingTabs(s: string): string {
+        while(s.charAt(0) == '\t') {
+            s = s.slice(1, s.length);
+        }
+
+        return s;
+    }
+
     /**
      * Extracts the cross validation results from the given string.
      * @param resultString - the result as string
@@ -457,5 +467,63 @@ export class WekaResultParserUtils {
         }
 
         return classifiedAs;
+    }
+
+    static extractAttributeSelectionResult(contentToParse: string): AttributeSelectionResult {
+        const attributeSelectionResult: AttributeSelectionResult = new AttributeSelectionResult();
+        attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
+
+        return attributeSelectionResult;
+    }
+
+    private static extractAttributeSelectionSearchMethod(contentToParse: string): SearchMethod {
+        let name: string = '';
+        let startSet: string = '';
+        let searchDirection: string = '';
+        let staleSearchAfterNodeExpansions: number = -Infinity;
+        let totalNumberOfSubsetsEvaluated: number = -Infinity;
+        let meritOfBestSubsetFound: number = -Infinity;
+
+        let regEx = /(?:Search Method:\n)((.|\n)*)(?:Attribute Subset Evaluator)+/g;
+        const regExResult = regEx.exec(contentToParse);
+        const searchMethodRaw: string = regExResult[1];
+        searchMethodRaw.split('\n').forEach((line, index) => {
+            line = this.removeLeadingTabs(line);
+
+            if(index === 0) {
+                regEx = /.*[^.]/g;
+                const regExResult = regEx.exec(line);
+                name = regExResult[0];
+            } else if(index === 1) {
+                regEx = /(?:\.*:\s)(.*)/g;
+                const regExResult = regEx.exec(line);
+                startSet = regExResult[1];
+            } else if(index === 2) {
+                regEx = /(?:\.*:\s)(.*)/g;
+                const regExResult = regEx.exec(line);
+                searchDirection = regExResult[1];
+            } else if(index === 3) {
+                regEx = /\d+/g;
+                const regExResult = regEx.exec(line);
+                staleSearchAfterNodeExpansions = Number.parseFloat(regExResult[0]);
+            } else if(index === 4) {
+                regEx = /\d+/g;
+                const regExResult = regEx.exec(line);
+                totalNumberOfSubsetsEvaluated = Number.parseFloat(regExResult[0]);
+            } else if(index === 5) {
+                regEx = /\d+\.?\d*/g;
+                const regExResult = regEx.exec(line);
+                meritOfBestSubsetFound = Number.parseFloat(regExResult[0]);
+            }
+        });
+
+        return {
+            name: name,
+            startSet: startSet,
+            searchDirection: searchDirection,
+            staleSearchAfterNodeExpansions: staleSearchAfterNodeExpansions,
+            totalNumberOfSubsetsEvaluated: totalNumberOfSubsetsEvaluated,
+            meritOfBestSubsetFound: meritOfBestSubsetFound
+        };
     }
 }
