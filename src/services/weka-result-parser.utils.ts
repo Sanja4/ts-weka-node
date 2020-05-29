@@ -182,7 +182,7 @@ export class WekaResultParserUtils {
         startIdentifier = '\n\n\nRandomTree\n==========\n\n';
         endIdentifier = '\n\nSize of the tree : ';
 
-        while (resultString.includes(startIdentifier)) {
+        while(resultString.includes(startIdentifier)) {
             // Model
             startIndex = resultString.search(startIdentifier) + startIdentifier.length;
             endIndex = resultString.search(endIdentifier);
@@ -193,7 +193,7 @@ export class WekaResultParserUtils {
             startIndex = resultString.search(endIdentifier) + endIdentifier.length;
             endIndex = resultString.search(startIdentifier);
 
-            if (endIndex == -1) {
+            if(endIndex == -1) {
                 // last tree, use a different end identifier
                 endIdentifier = '\n\n\n\nAttribute importance';
                 endIndex = resultString.search(endIdentifier);
@@ -234,7 +234,7 @@ export class WekaResultParserUtils {
             // the regExp matches the following string (w/o quotes), for example: '0.39 (    11)  trajectorySimilarityTram'
             const regExpResult = regExp.exec(result);
 
-            if (regExpResult != null && regExpResult.length > 0) {
+            if(regExpResult != null && regExpResult.length > 0) {
                 const attributeImportance: AttributeImportance = new AttributeImportance({
                     averageImpurityDecrease: Number.parseFloat(regExpResult[1]),
                     numberOfNodes: Number.parseFloat(regExpResult[2]),
@@ -254,7 +254,7 @@ export class WekaResultParserUtils {
      */
     private static removeLeadingLineBreaks(s: string): string {
         // remove leading line breaks
-        while (s.charAt(0) == '\n') {
+        while(s.charAt(0) == '\n') {
             s = s.slice(1, s.length);
         }
 
@@ -268,7 +268,7 @@ export class WekaResultParserUtils {
      */
     private static removeTrailingLineBreaks(s: string): string {
         // remove trailing line breaks
-        while (s.charAt(s.length - 1) == '\n') {
+        while(s.charAt(s.length - 1) == '\n') {
             s = s.slice(0, s.length - 1);
         }
 
@@ -276,7 +276,7 @@ export class WekaResultParserUtils {
     }
 
     private static removeLeadingSpaces(s: string): string {
-        while (s.charAt(0) == ' ') {
+        while(s.charAt(0) == ' ') {
             s = s.slice(1, s.length);
         }
 
@@ -297,30 +297,30 @@ export class WekaResultParserUtils {
         const crossVal: ValidationOverview = new ValidationOverview();
 
         crossValidationLines.forEach(line => {
-            if (line.includes('Correctly Classified Instances')) {
+            if(line.includes('Correctly Classified Instances')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.correctlyClassifiedInstancesAbsolute = Number.parseFloat(regexResult[1]);
                 crossVal.correctlyClassifiedInstancesRelative = Number.parseFloat(regexResult[2]);
-            } else if (line.includes('Incorrectly Classified Instances')) {
+            } else if(line.includes('Incorrectly Classified Instances')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.inCorrectlyClassifiedInstancesAbsolute = Number.parseFloat(regexResult[1]);
                 crossVal.inCorrectlyClassifiedInstancesRelative = Number.parseFloat(regexResult[2]);
-            } else if (line.includes('Kappa statistic')) {
+            } else if(line.includes('Kappa statistic')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.kappaStatistic = Number.parseFloat(regexResult[1]);
-            } else if (line.includes('Mean absolute error')) {
+            } else if(line.includes('Mean absolute error')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.meanAbsoluteError = Number.parseFloat(regexResult[1]);
-            } else if (line.includes('Root mean squared error')) {
+            } else if(line.includes('Root mean squared error')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.rootMeanSquaredError = Number.parseFloat(regexResult[1]);
-            } else if (line.includes('Relative absolute error')) {
+            } else if(line.includes('Relative absolute error')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.relativeAbsoluteError = Number.parseFloat(regexResult[1]);
-            } else if (line.includes('Root relative squared error')) {
+            } else if(line.includes('Root relative squared error')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.rootRelativeSquaredError = Number.parseFloat(regexResult[1]);
-            } else if (line.includes('Total Number of Instances')) {
+            } else if(line.includes('Total Number of Instances')) {
                 regexResult = regExp.exec(resultString);
                 crossVal.totalWeightOfInstances = Number.parseFloat(regexResult[1]);
             }
@@ -344,17 +344,17 @@ export class WekaResultParserUtils {
         let startIndexOfClass: number;
 
         resultString.split('\n').forEach(line => {
-            if (line.includes('Class')) {
+            if(line.includes('Class')) {
                 startIndexOfClass = line.indexOf('Class');
                 return;
             }
 
             const regExpMatchResult = line.match(regExp);
-            if (regExpMatchResult == null) {
+            if(regExpMatchResult == null) {
                 return;
             }
 
-            if (line.includes('Weighted Avg.')) {
+            if(line.includes('Weighted Avg.')) {
                 weightedAverage.truePositiveRate = Number.parseFloat(regExpMatchResult[0]);
                 weightedAverage.falsePositiveRate = Number.parseFloat(regExpMatchResult[1]);
                 weightedAverage.precision = Number.parseFloat(regExpMatchResult[2]);
@@ -396,12 +396,12 @@ export class WekaResultParserUtils {
         const trueClasses: string[] = this.extractTrueClasses(splitString);
         const matrixElements: ConfusionMatrixElement[] = [];
 
-        for (let i = 0; i < splitString.length; i++) {
-            for (let j = 0; j < trueClasses.length; j++) {
+        for(let i = 0; i < splitString.length; i++) {
+            for(let j = 0; j < trueClasses.length; j++) {
                 const classifiedAs = [];
                 classifiedAs.push(splitString[i]);
                 const classifiedAsExtracted = this.extractTrueClasses(classifiedAs);
-                if (classifiedAsExtracted.includes(trueClasses[j])) {
+                if(classifiedAsExtracted.includes(trueClasses[j])) {
                     const element: ConfusionMatrixElement = new ConfusionMatrixElement();
                     element.trueClass = trueClasses[j];
                     element.classifiedAs = this.extractClassifiedAs(splitString[i], trueClasses);
@@ -429,7 +429,7 @@ export class WekaResultParserUtils {
             const regExp: RegExp = new RegExp(trueClassRegExp);
             const regExpResult = regExp.exec(trueClass);
 
-            if (regExpResult != null) {
+            if(regExpResult != null) {
                 trueClasses.push(regExpResult[1]);
             }
         });
@@ -448,8 +448,11 @@ export class WekaResultParserUtils {
 
         let match;
         let i = 0;
-        while ((match = classifiedAsRegExp.exec(splitString)) != null) {
-            classifiedAs.push({predictedClass: trueClasses[i], weight: Number.parseFloat(match[0])});
+        while((match = classifiedAsRegExp.exec(splitString)) != null) {
+            classifiedAs.push({
+                predictedClass: trueClasses[i],
+                weight: Number.parseFloat(match[0])
+            });
             i++;
         }
 
