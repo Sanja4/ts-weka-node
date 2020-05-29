@@ -15,6 +15,7 @@ import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
 import {RandomTree} from '../model/classifiers/random-tree.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 import {SearchMethod} from '../model/attribute-selection/search-method.model';
+import {SelectedAttributes} from '../model/attribute-selection/selected-attributes.model';
 
 export class WekaResultParserUtils {
 
@@ -473,6 +474,7 @@ export class WekaResultParserUtils {
         const attributeSelectionResult: AttributeSelectionResult = new AttributeSelectionResult();
         attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
         attributeSelectionResult.attributeSubsetEvaluator = this.extractAttributeSelectionAttributeSubsetEvaluator(contentToParse);
+        attributeSelectionResult.selectedAttributes = this.extractAttributeSelectionSelectedAttributes(contentToParse);
 
         return attributeSelectionResult;
     }
@@ -534,5 +536,38 @@ export class WekaResultParserUtils {
         const startIndex = contentToParse.search(startIdentifier);
         const endIndex = contentToParse.search(endIdentifier);
         return contentToParse.substring(startIndex, endIndex);
+    }
+
+    private static extractAttributeSelectionSelectedAttributes(contentToParse: string): SelectedAttributes {
+        const attributeIndexes: number[] = [];
+        let numberOfAttributes: number = -Infinity;
+        const attributeNames: string[] = [];
+
+        let regEx = /(?:Selected attributes: )((?:\d+(,|\s))*)/g;
+        let regExResult = regEx.exec(contentToParse);
+        let raw: string = regExResult[1];
+        raw.split(',').forEach(line => {
+            attributeIndexes.push(Number.parseFloat(line));
+        });
+
+        regEx = /(?:\s:\s)(\d*)/g;
+        regExResult = regEx.exec(contentToParse);
+        numberOfAttributes = Number.parseFloat(regExResult[1]);
+
+        regEx = /(?:\s:\s\d*\n)((.|\n)*)/g;
+        regExResult = regEx.exec(contentToParse);
+        raw = regExResult[1];
+        raw.split('\n').forEach(line => {
+            if(line.length != 0) {
+                line = this.removeLeadingSpaces(line);
+                attributeNames.push(line);
+            }
+        });
+
+        return {
+            attributeIndexes: attributeIndexes,
+            numberOfAttributes: numberOfAttributes,
+            attributeNames: attributeNames
+        };
     }
 }
