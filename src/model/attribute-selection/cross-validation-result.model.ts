@@ -1,6 +1,7 @@
+import {CrossValidationResultDetail} from './cross-validation-result-detail.model';
+
 export interface CrossValidationResult {
-    attributeIndex: number;
-    attributeName: string;
-    numberOfFolds: number;
-    percentageOfFolds: number;
+    seed: number;
+    crossValidationFolds: number
+    crossValidationResultDetails: CrossValidationResultDetail[];
 }

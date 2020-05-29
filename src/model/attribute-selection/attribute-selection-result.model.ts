@@ -9,5 +9,5 @@ export class AttributeSelectionResult {
 
     selectedAttributes: SelectedAttributes;
 
-    crossValidationResults: CrossValidationResult[];
+    crossValidationResult: CrossValidationResult;
 }

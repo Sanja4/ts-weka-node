@@ -16,6 +16,8 @@ import {RandomTree} from '../model/classifiers/random-tree.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 import {SearchMethod} from '../model/attribute-selection/search-method.model';
 import {SelectedAttributes} from '../model/attribute-selection/selected-attributes.model';
+import {CrossValidationResult} from '../model/attribute-selection/cross-validation-result.model';
+import {CrossValidationResultDetail} from '../model/attribute-selection/cross-validation-result-detail.model';
 
 export class WekaResultParserUtils {
 
@@ -475,6 +477,7 @@ export class WekaResultParserUtils {
         attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
         attributeSelectionResult.attributeSubsetEvaluator = this.extractAttributeSelectionAttributeSubsetEvaluator(contentToParse);
         attributeSelectionResult.selectedAttributes = this.extractAttributeSelectionSelectedAttributes(contentToParse);
+        attributeSelectionResult.crossValidationResult = this.extractAttributeSelectionCrossValidationResults(contentToParse);
 
         return attributeSelectionResult;
     }
@@ -568,6 +571,69 @@ export class WekaResultParserUtils {
             attributeIndexes: attributeIndexes,
             numberOfAttributes: numberOfAttributes,
             attributeNames: attributeNames
+        };
+    }
+
+    private static extractAttributeSelectionCrossValidationResults(contentToParse: string): CrossValidationResult {
+        let crossValidationFolds: number = -Infinity;
+        let seed: number = -Infinity;
+        let crossValidationResultDetails: CrossValidationResultDetail[] = [];
+
+        let startIdentifier = '=== Attribute selection';
+        const startIndex = contentToParse.search(startIdentifier);
+        let endIndex = contentToParse.length;
+        let raw: string = contentToParse.substring(startIndex, endIndex);
+
+        let regEx = /(?:Attribute selection\s)(\d+)/g;
+        let regExResult = regEx.exec(raw);
+        crossValidationFolds = Number.parseFloat(regExResult[1]);
+
+        regEx = /(?:seed:\s)(\d+)/g;
+        regExResult = regEx.exec(raw);
+        seed = Number.parseFloat(regExResult[1]);
+
+        let endIdentifier = 'attribute\n';
+        endIndex = raw.search(endIdentifier) + endIdentifier.length;
+        raw = raw.slice(endIndex, raw.length);
+
+        raw.split('\n').forEach(line => {
+            if(line.length > 1) {
+
+                let attributeIndex: number = -Infinity;
+                let attributeName: string;
+                let numberOfFolds: number = -Infinity;
+                let percentageOfFolds: number = -Infinity;
+
+                regEx = new RegExp(/(\d+)(?:\s\w*$)/gm);
+                regExResult = regEx.exec(line);
+                attributeIndex = Number.parseFloat(regExResult[1]);
+
+                regEx = new RegExp(/(?:\d+\s)(\w*$)/gm);
+                regExResult = regEx.exec(line);
+                attributeName = regExResult[1];
+
+                regEx = new RegExp(/(\d+)(?:\()/g);
+                regExResult = regEx.exec(line);
+                numberOfFolds = Number.parseFloat(regExResult[1]);
+
+                regEx = new RegExp(/(?:\(\s*)(\d+)(?:\s%\))/g);
+                regExResult = regEx.exec(line);
+                percentageOfFolds = Number.parseFloat(regExResult[1]);
+
+                crossValidationResultDetails.push({
+                    attributeIndex: attributeIndex,
+                    attributeName: attributeName,
+                    numberOfFolds: numberOfFolds,
+                    percentageOfFolds: percentageOfFolds
+                });
+            }
+
+        });
+
+        return {
+            crossValidationFolds: crossValidationFolds,
+            seed: seed,
+            crossValidationResultDetails: crossValidationResultDetails
         };
     }
 }
