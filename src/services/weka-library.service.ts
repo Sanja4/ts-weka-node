@@ -1,13 +1,17 @@
 import {WekaResultParserUtils} from './weka-result-parser.utils';
 import * as path from 'path';
-import {RandomForestContainer} from '../model/random-forest-container.model';
-import {GlobalWekaOptions} from '../model/global-weka-options.model';
-import {RandomForestOptions} from '../model/random-forest-options.model';
-import {EvaluationResult} from '../model/evaluation-result.model';
-import {AttributeImportance} from '../model/attribute-importance.model';
 import {ExecException} from 'child_process';
 import * as fs from 'fs-extra';
-import {ResampleOptions} from '../model/resample-options.model';
+import {SearchMethod} from '../enum/search-method.enum';
+import {ResampleOptions} from '../model/options/resample-options.model';
+import {CfsSubsetEvalOptions} from '../model/options/cfs-subset-eval-options.model';
+import {BestFirstOptions} from '../model/options/best-first-options.model';
+import {GeneralOptions} from '../model/options/general-options.model';
+import {GlobalWekaOptions} from '../model/options/global-weka-options.model';
+import {RandomForestOptions} from '../model/options/random-forest-options.model';
+import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
+import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
+import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
 
 const exec = require('child_process').exec;
 
@@ -84,7 +88,6 @@ export class WekaLibraryService {
     public async balanceDatasetUsingClassBalancer(fileName: string): Promise<void> {
         console.log('balanceDatasetUsingClassBalancer ' + fileName);
 
-
         // call Weka
         const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
                                 + ` -c last`
@@ -107,10 +110,62 @@ export class WekaLibraryService {
                               + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
 
         if(resampleOptions.noReplacement) {
-            command += +` -no-replacement}`;
+            command += +` -no-replacement`;
         }
 
         await this.executeCommand(command);
+    }
+
+    public async performAttributeSelection(evaluator: (evaluatorOptions: CfsSubsetEvalOptions | any) => Promise<any>,
+                                           searchMethod: SearchMethod,
+                                           searchMethodOptions: BestFirstOptions | any,
+                                           evaluatorOptions: CfsSubsetEvalOptions | any) {
+        let searchMethodCommand: string = ``;
+
+        if(searchMethod == SearchMethod.BEST_FIRST) {
+            searchMethodCommand += `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
+        }
+
+        evaluatorOptions.s = searchMethodCommand;
+
+        return await evaluator(evaluatorOptions);
+    }
+
+    public async performCfsSubsetEval(options: CfsSubsetEvalOptions, generalOptions: GeneralOptions): Promise<string> {
+        let command: string = `java -classpath \"${this.wekaClassPath}\" weka.attributeSelection.CfsSubsetEval`
+                              + ` -s \"${options.s}\"`
+                              + ` -P ${options.P}`
+                              + ` -E ${options.E}`
+                              + ` -i \"${generalOptions.i}\"`
+                              + ` -c last`;
+
+        if(options.M) {
+            command += +` -M`;
+        }
+
+        if(options.L) {
+            command += +` -L`;
+        }
+
+        if(options.Z) {
+            command += +` -Z`;
+        }
+
+        if(options.D) {
+            command += +` -D`;
+        }
+
+        if(generalOptions.x) {
+            command += ` -x ${generalOptions.x}`;
+        }
+
+
+
+        const output: string = await this.executeCommand(command);
+
+        // TODO parse the output (different with and without cross validation (-x))
+
+        return output;
     }
 
     /**
@@ -119,11 +174,14 @@ export class WekaLibraryService {
      * @param useBalancedArffFile - whether to use the balanced (=true) or unbalanced (=false) arff-file . Defaults to false (= unbalanced).
      * @param options - the global Weka options to use
      * @param randomForestOptions - the random forest options to use
+     * @param generalOptions - the general options (input file path not used)
      * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
      * @param includeWekaOutput - if {@link RandomForestContainer.wekaOutput} should be included in the result
      */
-    public learnRandomForest(fileName: string, useBalancedArffFile?: boolean, options?: GlobalWekaOptions,
+    public learnRandomForest(fileName: string, useBalancedArffFile?: boolean,
+                             options?: GlobalWekaOptions,
                              randomForestOptions?: RandomForestOptions,
+                             generalOptions?: GeneralOptions,
                              enableLogging?: boolean,
                              includeWekaOutput?: boolean): Promise<RandomForestContainer> {
 
@@ -140,20 +198,28 @@ export class WekaLibraryService {
             options = new GlobalWekaOptions();
         }
 
+        if(generalOptions == null) {
+            generalOptions = new GeneralOptions();
+        }
+
         if(randomForestOptions == null) {
             randomForestOptions = new RandomForestOptions();
         }
 
         return new Promise<RandomForestContainer>((resolve, reject) => {
             // call Weka
-            const command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest`
+            let command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest`
                                     + ` -t \"${trainingFilePath}\"`
-                                    + ` -num-slots ${options.numberOfSlots}`
-                                    + ` -x ${options.numberOfFolds}`
+                                    + ` -num-slots ${options.numSlots}`
                                     + ` -I ${randomForestOptions.numberOfIterations}`
                                     + ` -M ${randomForestOptions.minNumberOfInstances}`
                                     + ` -depth ${randomForestOptions.depth}`
                                     + ` -print -attribute-importance`;
+
+            if(generalOptions.x != null) {
+                command +=  ` -x ${generalOptions.x}`;
+            }
+
             console.log(`Executing command ${command}`);
 
             let stdoutData: string = '';
@@ -198,7 +264,6 @@ export class WekaLibraryService {
                 !fs.existsSync(`${this.outputDirectory}/classifiers/`) &&
                 fs.mkdirSync(`${this.outputDirectory}/classifiers/`, {recursive: true});
 
-
                 // store the final result in files
                 await this.storeAttributeImportanceToFile(result.classifierModelFullTrainingSet.attributeImportance, fileName);
                 await this.storeEvaluationToFile(result.evaluationCrossValidation, fileName);
@@ -214,9 +279,10 @@ export class WekaLibraryService {
         });
     }
 
-    private executeCommand(command: string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
+    private executeCommand(command: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
             console.log(`Executing command ${command}`);
+            let stdoutData: string = '';
 
             const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer,
                                                                   stderr: Buffer) => {
@@ -229,13 +295,21 @@ export class WekaLibraryService {
                 }
             });
 
+            ls.stdout.on('data', (data) => {
+                stdoutData += data;
+            });
+
+            ls.stderr.on('error', (data) => {
+                console.error(`stderr: ${data}`);
+            });
+
             ls.on('close', async(code) => {
                 console.log(`Child process exited with code ${code}`);
                 if(code != 0) {
                     return reject(`Command failed. Child process exited with code ${code}.`);
                 }
 
-                resolve();
+                resolve(stdoutData);
             });
         });
     }

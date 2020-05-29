@@ -1,17 +1,18 @@
 /**
  * Utils class to parse a result of a Weka training.
  */
-import {RandomForestContainer} from '../model/random-forest-container.model';
-import {EvaluationResult} from '../model/evaluation-result.model';
-import {RandomForest} from '../model/random-forest.model';
-import {RandomTree} from '../model/random-tree.model';
-import {AttributeImportance} from '../model/attribute-importance.model';
-import {DetailedAccuracyByClass} from '../model/detailed-accuracy-by-class.model';
-import {DetailedAccuracy} from '../model/detailed-accuracy.model';
-import {ConfusionMatrix} from '../model/confusion-matrix.model';
-import {ConfusionMatrixElement} from '../model/confusion-matrix-element.model';
-import {ValidationOverview} from '../model/validation-overview.model';
+
 import {WekaTreeParserUtils} from 'ts-weka/lib/utils/weka-tree-parser.utils';
+import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
+import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
+import {RandomForest} from '../model/classifiers/random-forest.model';
+import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
+import {ValidationOverview} from '../model/evaluation/validation-overview.model';
+import {DetailedAccuracyByClass} from '../model/evaluation/detailed-accuracy-by-class.model';
+import {DetailedAccuracy} from '../model/evaluation/detailed-accuracy.model';
+import {ConfusionMatrixElement} from '../model/evaluation/confusion-matrix-element.model';
+import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
+import {RandomTree} from '../model/classifiers/random-tree.model';
 
 export class WekaResultParserUtils {
 
@@ -206,6 +207,7 @@ export class WekaResultParserUtils {
                 parsedClassifier: WekaTreeParserUtils.parse(model),
                 sizeOfTree: treeSize
             };
+
             result.totalModel.push(randomTree);
             resultString = resultString.slice(endIndex);
         }

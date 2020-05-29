@@ -1,6 +1,9 @@
 import {WekaLibraryService} from './weka-library.service';
-import {RandomForestContainer} from '../model/random-forest-container.model';
-import * as fs from 'fs';
+import {SearchMethod} from '../enum/search-method.enum';
+import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
+import {GeneralOptions} from '../model/options/general-options.model';
+import {BestFirstOptions} from '../model/options/best-first-options.model';
+import {CfsSubsetEvalOptions} from '../model/options/cfs-subset-eval-options.model';
 
 describe('WekaLibraryService', () => {
 
@@ -31,20 +34,48 @@ describe('WekaLibraryService', () => {
         expect(result).toEqual('input\\datasets\\balanced\\test_dataset.arff');
     });
 
-    test('should balance a dataset', async() => {
-        await serviceUnderTest.balanceDatasetUsingClassBalancer('test_dataset.arff');
-        const fileContent: string = await fs.readFileSync(await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff'), {encoding: 'utf-8'});
-        const fileContentPerLine: string[] = fileContent.split('\n');
-        // TODO
-        // expect(fileContentPerLine[0]).toEqual('@relation CustomDataset');
+    test('should perform attribute selection without cross validation', async() => {
+        const inputFilePath: string = await serviceUnderTest.getTrainingFilePathUnbalanced('test_dataset.arff');
+        const generalOptions: GeneralOptions = new GeneralOptions({
+            i: inputFilePath,
+            x: null
+        });
+
+        const bestFirstOptions: BestFirstOptions = new BestFirstOptions();
+
+        const evaluatorOptions: CfsSubsetEvalOptions = new CfsSubsetEvalOptions();
+
+        const result: string = await serviceUnderTest.performAttributeSelection(
+            (evaluatorOptions) => serviceUnderTest.performCfsSubsetEval(evaluatorOptions, generalOptions),
+            SearchMethod.BEST_FIRST,
+            bestFirstOptions,
+            evaluatorOptions);
+
+        console.log(result);
+
+        expect(result).not.toBeNull();
     });
 
-    test('should balance all datasets', async() => {
-        await serviceUnderTest.balanceAllDataSetsUsingClassBalancer();
-        const fileContent: string = await fs.readFileSync(await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff'), {encoding: 'utf-8'});
-        const fileContentPerLine: string[] = fileContent.split('\n');
-        // TODO
-        // expect(fileContentPerLine[0]).toEqual('@relation CustomDataset');
+    test('should perform attribute selection with cross validation', async() => {
+        const inputFilePath: string = await serviceUnderTest.getTrainingFilePathUnbalanced('test_dataset.arff');
+        const generalOptions: GeneralOptions = new GeneralOptions({
+            i: inputFilePath,
+            x: 10
+        });
+
+        const bestFirstOptions: BestFirstOptions = new BestFirstOptions();
+
+        const evaluatorOptions: CfsSubsetEvalOptions = new CfsSubsetEvalOptions();
+
+        const result: string = await serviceUnderTest.performAttributeSelection(
+            (evaluatorOptions) => serviceUnderTest.performCfsSubsetEval(evaluatorOptions, generalOptions),
+            SearchMethod.BEST_FIRST,
+            bestFirstOptions,
+            evaluatorOptions);
+
+        console.log(result);
+
+        expect(result).not.toBeNull();
     });
 
 });

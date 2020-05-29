@@ -1,5 +1,5 @@
 import {RandomTree} from './random-tree.model';
-import {AttributeImportance} from './attribute-importance.model';
+import {AttributeImportance} from '../evaluation/attribute-importance.model';
 
 export class RandomForest {
 

@@ -1,5 +1,5 @@
 import {RandomForest} from './random-forest.model';
-import {EvaluationResult} from './evaluation-result.model';
+import {EvaluationResult} from '../evaluation/evaluation-result.model';
 
 export class RandomForestContainer {
 
