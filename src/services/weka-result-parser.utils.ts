@@ -472,6 +472,7 @@ export class WekaResultParserUtils {
     static extractAttributeSelectionResult(contentToParse: string): AttributeSelectionResult {
         const attributeSelectionResult: AttributeSelectionResult = new AttributeSelectionResult();
         attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
+        attributeSelectionResult.attributeSubsetEvaluator = this.extractAttributeSelectionAttributeSubsetEvaluator(contentToParse);
 
         return attributeSelectionResult;
     }
@@ -484,7 +485,7 @@ export class WekaResultParserUtils {
         let totalNumberOfSubsetsEvaluated: number = -Infinity;
         let meritOfBestSubsetFound: number = -Infinity;
 
-        let regEx = /(?:Search Method:\n)((.|\n)*)(?:Attribute Subset Evaluator)+/g;
+        let regEx = /(?:Search Method:\n)((.|\n)*)(?:Attribute Subset Evaluator)/g;
         const regExResult = regEx.exec(contentToParse);
         const searchMethodRaw: string = regExResult[1];
         searchMethodRaw.split('\n').forEach((line, index) => {
@@ -525,5 +526,13 @@ export class WekaResultParserUtils {
             totalNumberOfSubsetsEvaluated: totalNumberOfSubsetsEvaluated,
             meritOfBestSubsetFound: meritOfBestSubsetFound
         };
+    }
+
+    private static extractAttributeSelectionAttributeSubsetEvaluator(contentToParse: string): string {
+        let startIdentifier = 'Attribute Subset Evaluator';
+        let endIdentifier = '\n\nSelected attributes';
+        const startIndex = contentToParse.search(startIdentifier);
+        const endIndex = contentToParse.search(endIdentifier);
+        return contentToParse.substring(startIndex, endIndex);
     }
 }
