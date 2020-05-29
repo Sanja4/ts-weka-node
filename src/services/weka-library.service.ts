@@ -99,6 +99,7 @@ export class WekaLibraryService {
         console.log('resampleDataset ' + fileName);
         // call Weka
         let command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.Resample`
+                              + ` -c last`
                               + ` -S ${resampleOptions.seed}`
                               + ` -Z ${resampleOptions.sizeOutputDataset}`
                               + ` -B ${resampleOptions.biasFactor}`
