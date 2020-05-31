@@ -13,6 +13,7 @@ import {RandomForestContainer} from '../model/classifiers/random-forest-containe
 import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
+import {EvaluatorType} from '../enum/evaluator-type.enum';
 
 const exec = require('child_process').exec;
 
@@ -38,6 +39,18 @@ export class WekaLibraryService {
         return directoryName;
     }
 
+    public getInitialUnbalancedDataSetsDirectory(): string {
+        const directoryName: string = `${this.inputDirectory}/datasets/initial/unbalanced/`;
+        !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
+        return directoryName;
+    }
+
+    public getInitialBalancedDataSetsDirectory(): string {
+        const directoryName: string = `${this.inputDirectory}/datasets/initial/balanced/`;
+        !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
+        return directoryName;
+    }
+
     /**
      * @returns the path to the directory where the service expects the balanced data sets as arff files.
      * Creates the directory if it does not exist.
@@ -48,12 +61,20 @@ export class WekaLibraryService {
         return directoryName;
     }
 
-    public getTrainingFilePathUnbalanced(fileName: string): string {
+    public getUnbalancedTrainingFilePath(fileName: string): string {
         return path.join(this.getUnbalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
     }
 
-    public getTrainingFilePathBalanced(fileName: string): string {
+    public getBalancedTrainingFilePath(fileName: string): string {
         return path.join(this.getBalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
+    }
+
+    public getInitialUnbalancedFilePath(fileName: string): string {
+        return path.join(this.getInitialUnbalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
+    }
+
+    public getInitialBalancedFilePath(fileName: string): string {
+        return path.join(this.getInitialBalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
     }
 
     /**
@@ -75,15 +96,15 @@ export class WekaLibraryService {
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
         console.log('File names of all unbalanced data sets', allUnbalancedDatasetFilenames);
         for(const fileName of allUnbalancedDatasetFilenames) {
-            await this.resampleDataset(fileName, resampleOptions);
+            await this.resampleDataset(this.getUnbalancedTrainingFilePath(fileName), this.getBalancedTrainingFilePath(fileName), resampleOptions);
         }
     }
 
     /**
      * Balances the data set in the given file using weka.filters.supervised.instance.ClassBalancer.
-     * The unbalanced (original) data set has to be in the directory provided by {@link getTrainingFilePathUnbalanced}.
+     * The unbalanced (original) data set has to be in the directory provided by {@link getUnbalancedTrainingFilePath}.
      * The class attribute has to be the last attribute in the data set (option '-c last').
-     * The balanced data set is placed in the directory provided by {@link getTrainingFilePathBalanced}.
+     * The balanced data set is placed in the directory provided by {@link getBalancedTrainingFilePath}.
      * @param fileName - the file name of the ARFF data set
      */
     public async balanceDatasetUsingClassBalancer(fileName: string): Promise<void> {
@@ -92,23 +113,23 @@ export class WekaLibraryService {
         // call Weka
         const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
             + ` -c last`
-            + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
-            + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+            + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
+            + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
         console.log(`Executing command ${command}`);
 
         await this.executeCommand(command);
     }
 
-    public async resampleDataset(fileName: string, resampleOptions: ResampleOptions): Promise<void> {
-        console.log('resampleDataset ' + fileName);
+    public async resampleDataset(inputFilePath: string, outputFilePath: string, resampleOptions: ResampleOptions): Promise<void> {
+        console.log('resampleDataset ' + inputFilePath);
         // call Weka
         let command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.Resample`
             + ` -c last`
             + ` -S ${resampleOptions.seed}`
             + ` -Z ${resampleOptions.sizeOutputDataset}`
             + ` -B ${resampleOptions.biasFactor}`
-            + ` -i \"${this.getTrainingFilePathUnbalanced(fileName)}\"`
-            + ` -o \"${this.getTrainingFilePathBalanced(fileName)}\"`;
+            + ` -i \"${inputFilePath}\"`
+            + ` -o \"${outputFilePath}\"`;
 
         if(resampleOptions.noReplacement) {
             command += +` -no-replacement`;
@@ -117,19 +138,26 @@ export class WekaLibraryService {
         await this.executeCommand(command);
     }
 
-    public async performAttributeSelection(evaluator: (evaluatorOptions: CfsSubsetEvalOptions | any) => Promise<any>,
+    public async performAttributeSelection(evaluator: EvaluatorType,
+                                           evaluatorOptions: CfsSubsetEvalOptions | any,
+                                           generalOptions: GeneralOptions,
                                            searchMethod: SearchMethod,
-                                           searchMethodOptions: BestFirstOptions | any,
-                                           evaluatorOptions: CfsSubsetEvalOptions | any) {
+                                           searchMethodOptions: BestFirstOptions | any) {
         let searchMethodCommand: string = ``;
 
         if(searchMethod == SearchMethod.BEST_FIRST) {
             searchMethodCommand += `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
+        } else {
+            throw new Error(`Found no search method for ${searchMethod}`);
         }
 
         evaluatorOptions.s = searchMethodCommand;
 
-        return await evaluator(evaluatorOptions);
+        if(evaluator == EvaluatorType.CFS_SUBSET_EVAL) {
+            return await this.performCfsSubsetEval(evaluatorOptions, generalOptions);
+        } else {
+            throw new Error(`Found no evaluator method for ${evaluator}`);
+        }
     }
 
     public async performCfsSubsetEval(options: CfsSubsetEvalOptions, generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
@@ -188,8 +216,8 @@ export class WekaLibraryService {
 
         useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
 
-        const trainingFilePath: string = useBalancedArffFile ? this.getTrainingFilePathBalanced(
-            fileName) : this.getTrainingFilePathUnbalanced(fileName);
+        const trainingFilePath: string = useBalancedArffFile ? this.getBalancedTrainingFilePath(
+            fileName) : this.getUnbalancedTrainingFilePath(fileName);
 
         if(options == null) {
             options = new GlobalWekaOptions();

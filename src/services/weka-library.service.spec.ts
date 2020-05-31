@@ -4,6 +4,8 @@ import {RandomForestContainer} from '../model/classifiers/random-forest-containe
 import {GeneralOptions} from '../model/options/general-options.model';
 import {BestFirstOptions} from '../model/options/best-first-options.model';
 import {CfsSubsetEvalOptions} from '../model/options/cfs-subset-eval-options.model';
+import {EvaluatorType} from '../enum/evaluator-type.enum';
+import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 
 describe('WekaLibraryService', () => {
 
@@ -15,27 +17,27 @@ describe('WekaLibraryService', () => {
     });
 
     test('should return the file path of an unbalanced file', async() => {
-        const result: string = await serviceUnderTest.getTrainingFilePathUnbalanced('test_dataset');
+        const result: string = await serviceUnderTest.getUnbalancedTrainingFilePath('test_dataset');
         expect(result).toEqual('input\\datasets\\unbalanced\\test_dataset.arff');
     });
 
     test('should return the file path of an unbalanced file with ending', async() => {
-        const result: string = await serviceUnderTest.getTrainingFilePathUnbalanced('test_dataset.arff');
+        const result: string = await serviceUnderTest.getUnbalancedTrainingFilePath('test_dataset.arff');
         expect(result).toEqual('input\\datasets\\unbalanced\\test_dataset.arff');
     });
 
     test('should return the file path of an balanced file', async() => {
-        const result: string = await serviceUnderTest.getTrainingFilePathBalanced('test_dataset');
+        const result: string = await serviceUnderTest.getBalancedTrainingFilePath('test_dataset');
         expect(result).toEqual('input\\datasets\\balanced\\test_dataset.arff');
     });
 
     test('should return the file path of an balanced file with ending', async() => {
-        const result: string = await serviceUnderTest.getTrainingFilePathBalanced('test_dataset.arff');
+        const result: string = await serviceUnderTest.getBalancedTrainingFilePath('test_dataset.arff');
         expect(result).toEqual('input\\datasets\\balanced\\test_dataset.arff');
     });
 
     test('should perform attribute selection without cross validation', async() => {
-        const inputFilePath: string = await serviceUnderTest.getTrainingFilePathUnbalanced('test_dataset.arff');
+        const inputFilePath: string = await serviceUnderTest.getUnbalancedTrainingFilePath('test_dataset.arff');
         const generalOptions: GeneralOptions = new GeneralOptions({
             i: inputFilePath,
             x: null
@@ -45,19 +47,14 @@ describe('WekaLibraryService', () => {
 
         const evaluatorOptions: CfsSubsetEvalOptions = new CfsSubsetEvalOptions();
 
-        const result: string = await serviceUnderTest.performAttributeSelection(
-            (evaluatorOptions) => serviceUnderTest.performCfsSubsetEval(evaluatorOptions, generalOptions),
-            SearchMethod.BEST_FIRST,
-            bestFirstOptions,
-            evaluatorOptions);
-
-        console.log(result);
+        const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL, evaluatorOptions, generalOptions,
+            SearchMethod.BEST_FIRST, bestFirstOptions);
 
         expect(result).not.toBeNull();
     });
 
     test('should perform attribute selection with cross validation', async() => {
-        const inputFilePath: string = await serviceUnderTest.getTrainingFilePathUnbalanced('test_dataset.arff');
+        const inputFilePath: string = await serviceUnderTest.getUnbalancedTrainingFilePath('test_dataset.arff');
         const generalOptions: GeneralOptions = new GeneralOptions({
             i: inputFilePath,
             x: 10
@@ -67,13 +64,8 @@ describe('WekaLibraryService', () => {
 
         const evaluatorOptions: CfsSubsetEvalOptions = new CfsSubsetEvalOptions();
 
-        const result: string = await serviceUnderTest.performAttributeSelection(
-            (evaluatorOptions) => serviceUnderTest.performCfsSubsetEval(evaluatorOptions, generalOptions),
-            SearchMethod.BEST_FIRST,
-            bestFirstOptions,
-            evaluatorOptions);
-
-        console.log(result);
+        const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL, evaluatorOptions, generalOptions,
+            SearchMethod.BEST_FIRST, bestFirstOptions);
 
         expect(result).not.toBeNull();
     });
