@@ -23,10 +23,11 @@ export class WekaLibraryService {
      * Creates a new instance of this service
      * @param inputDirectory - the path to the input data sets, e.g. './input'
      * @param outputDirectory - the output directory, e.g. './output'
-     * @param wekaClassPath - the path to the Weka JAR, e.g. `./src/bin/weka-3.9.3.jar`
+     * @param binPath - the full path to the JARs, e.g. `/usr/src/app/src/bin/`
      */
-    constructor(private outputDirectory: string, private inputDirectory: string,
-                private wekaClassPath: string) {
+    constructor(private outputDirectory: string,
+                private inputDirectory: string,
+                private binPath: string) {
     }
 
     /**
@@ -101,6 +102,14 @@ export class WekaLibraryService {
     }
 
     /**
+     * Returns the path for the WEKA JARs to use (for the java -classpath argument).
+     * Multiple paths are joined using a semicolon (;).
+     */
+    private getClassPath(): string {
+        return path.join(this.binPath, '*');
+    }
+
+    /**
      * Balances the data set in the given file using weka.filters.supervised.instance.ClassBalancer.
      * The unbalanced (original) data set has to be in the directory provided by {@link getUnbalancedTrainingFilePath}.
      * The class attribute has to be the last attribute in the data set (option '-c last').
@@ -111,7 +120,7 @@ export class WekaLibraryService {
         console.log('balanceDatasetUsingClassBalancer ' + fileName);
 
         // call Weka
-        const command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.ClassBalancer`
+        const command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.ClassBalancer`
             + ` -c last`
             + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
             + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
@@ -123,7 +132,7 @@ export class WekaLibraryService {
     public async resampleDataset(inputFilePath: string, outputFilePath: string, resampleOptions: ResampleOptions): Promise<void> {
         console.log('resampleDataset ' + inputFilePath);
         // call Weka
-        let command: string = `java -classpath \"${this.wekaClassPath}\" weka.filters.supervised.instance.Resample`
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.Resample`
             + ` -c last`
             + ` -S ${resampleOptions.seed}`
             + ` -Z ${resampleOptions.sizeOutputDataset}`
@@ -147,6 +156,10 @@ export class WekaLibraryService {
 
         if(searchMethod == SearchMethod.BEST_FIRST) {
             searchMethodCommand += `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
+        } else if(searchMethod == SearchMethod.EVOLUTIONARY_SEARCH) {
+            searchMethodCommand += `weka.attributeSelection.EvolutionarySearch -population-size 20 -generations 20 -init-op 0 -selection-op 1 -crossover-op 0 -crossover-probability 0.6 -mutation-op 0 -mutation-probability 0.1 -replacement-op 0 -seed 1 -report-frequency 20`;
+        } else if(searchMethod == SearchMethod.GENETIC_SEARCH) {
+            searchMethodCommand += `weka.attributeSelection.GeneticSearch -Z 20 -G 20 -C 0.6 -M 0.033 -R 20 -S 1`;
         } else {
             throw new Error(`Found no search method for ${searchMethod}`);
         }
@@ -161,7 +174,7 @@ export class WekaLibraryService {
     }
 
     public async performCfsSubsetEval(options: CfsSubsetEvalOptions, generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
-        let command: string = `java -classpath \"${this.wekaClassPath}\" weka.attributeSelection.CfsSubsetEval`
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.attributeSelection.CfsSubsetEval`
             + ` -s \"${options.s}\"`
             + ` -P ${options.P}`
             + ` -E ${options.E}`
@@ -233,7 +246,7 @@ export class WekaLibraryService {
 
         return new Promise<RandomForestContainer>((resolve, reject) => {
             // call Weka
-            let command: string = `java -classpath \"${this.wekaClassPath}\" weka.classifiers.trees.RandomForest`
+            let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`
                 + ` -t \"${trainingFilePath}\"`
                 + ` -num-slots ${options.numSlots}`
                 + ` -I ${randomForestOptions.numberOfIterations}`

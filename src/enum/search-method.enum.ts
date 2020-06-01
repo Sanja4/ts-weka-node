@@ -1,3 +1,5 @@
 export enum SearchMethod {
-    BEST_FIRST = 'best_first'
+    BEST_FIRST = 'BestFirst',
+    EVOLUTIONARY_SEARCH = 'EvolutionarySearch',
+    GENETIC_SEARCH = 'GeneticSearch'
 }

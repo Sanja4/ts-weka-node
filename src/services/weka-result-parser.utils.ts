@@ -14,7 +14,6 @@ import {ConfusionMatrixElement} from '../model/evaluation/confusion-matrix-eleme
 import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
 import {RandomTree} from '../model/classifiers/random-tree.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
-import {SearchMethod} from '../model/attribute-selection/search-method.model';
 import {SelectedAttributes} from '../model/attribute-selection/selected-attributes.model';
 import {CrossValidationResult} from '../model/attribute-selection/cross-validation-result.model';
 import {CrossValidationResultDetail} from '../model/attribute-selection/cross-validation-result-detail.model';
@@ -253,50 +252,6 @@ export class WekaResultParserUtils {
     }
 
     /**
-     * Helper function that removes the leading line breaks of the given string.
-     * @param s - the given string
-     * @returns the string without leading line breaks
-     */
-    private static removeLeadingLineBreaks(s: string): string {
-        // remove leading line breaks
-        while(s.charAt(0) == '\n') {
-            s = s.slice(1, s.length);
-        }
-
-        return s;
-    }
-
-    /**
-     * Helper function that removes the trailing line breaks of the given string.
-     * @param s - the given string
-     * @returns the string without trailing line breaks
-     */
-    private static removeTrailingLineBreaks(s: string): string {
-        // remove trailing line breaks
-        while(s.charAt(s.length - 1) == '\n') {
-            s = s.slice(0, s.length - 1);
-        }
-
-        return s;
-    }
-
-    private static removeLeadingSpaces(s: string): string {
-        while(s.charAt(0) == ' ') {
-            s = s.slice(1, s.length);
-        }
-
-        return s;
-    }
-
-    private static removeLeadingTabs(s: string): string {
-        while(s.charAt(0) == '\t') {
-            s = s.slice(1, s.length);
-        }
-
-        return s;
-    }
-
-    /**
      * Extracts the cross validation results from the given string.
      * @param resultString - the result as string
      * @returns the result as object
@@ -429,6 +384,67 @@ export class WekaResultParserUtils {
         return confusionMatrix;
     }
 
+    static extractAttributeSelectionResult(contentToParse: string,
+                                           isGeneralOptionsXSet: boolean): AttributeSelectionResult {
+        const attributeSelectionResult: AttributeSelectionResult = new AttributeSelectionResult();
+
+        attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
+        attributeSelectionResult.attributeSubsetEvaluator =
+            this.extractAttributeSelectionAttributeSubsetEvaluator(contentToParse);
+        attributeSelectionResult.selectedAttributes = this.extractAttributeSelectionSelectedAttributes(contentToParse,
+            isGeneralOptionsXSet);
+        if(isGeneralOptionsXSet) {
+            attributeSelectionResult.crossValidationResult =
+                this.extractAttributeSelectionCrossValidationResults(contentToParse);
+        }
+
+        return attributeSelectionResult;
+    }
+
+    /**
+     * Helper function that removes the leading line breaks of the given string.
+     * @param s - the given string
+     * @returns the string without leading line breaks
+     */
+    private static removeLeadingLineBreaks(s: string): string {
+        // remove leading line breaks
+        while(s.charAt(0) == '\n') {
+            s = s.slice(1, s.length);
+        }
+
+        return s;
+    }
+
+    /**
+     * Helper function that removes the trailing line breaks of the given string.
+     * @param s - the given string
+     * @returns the string without trailing line breaks
+     */
+    private static removeTrailingLineBreaks(s: string): string {
+        // remove trailing line breaks
+        while(s.charAt(s.length - 1) == '\n') {
+            s = s.slice(0, s.length - 1);
+        }
+
+        return s;
+    }
+
+    private static removeLeadingSpaces(s: string): string {
+        while(s.charAt(0) == ' ') {
+            s = s.slice(1, s.length);
+        }
+
+        return s;
+    }
+
+    private static removeLeadingTabs(s: string): string {
+        while(s.charAt(0) == '\t') {
+            s = s.slice(1, s.length);
+        }
+
+        return s;
+    }
+
     /**
      * Extracts the true classes from the given confusion matrix string.
      * @param splitString - the confusion matrix split by row.
@@ -455,7 +471,8 @@ export class WekaResultParserUtils {
      * @param splitString - the string to extract the information from
      * @param trueClasses - all available classes in the confusion matrix
      */
-    private static extractClassifiedAs(splitString: string, trueClasses: string[]): Array<{ predictedClass: string, weight: number }> {
+    private static extractClassifiedAs(splitString: string,
+                                       trueClasses: string[]): Array<{ predictedClass: string, weight: number }> {
         const classifiedAs: Array<{ predictedClass: string, weight: number }> = [];
         const classifiedAsRegExp = /(\d+\.?\d*)+/g;
 
@@ -472,69 +489,18 @@ export class WekaResultParserUtils {
         return classifiedAs;
     }
 
-    static extractAttributeSelectionResult(contentToParse: string, isGeneralOptionsXSet: boolean): AttributeSelectionResult {
-        const attributeSelectionResult: AttributeSelectionResult = new AttributeSelectionResult();
-
-        attributeSelectionResult.searchMethod = this.extractAttributeSelectionSearchMethod(contentToParse);
-        attributeSelectionResult.attributeSubsetEvaluator = this.extractAttributeSelectionAttributeSubsetEvaluator(contentToParse);
-        attributeSelectionResult.selectedAttributes = this.extractAttributeSelectionSelectedAttributes(contentToParse,
-            isGeneralOptionsXSet);
-        if(isGeneralOptionsXSet) {
-            attributeSelectionResult.crossValidationResult = this.extractAttributeSelectionCrossValidationResults(contentToParse);
-        }
-
-        return attributeSelectionResult;
-    }
-
-    private static extractAttributeSelectionSearchMethod(contentToParse: string): SearchMethod {
-        let name: string = '';
-        let startSet: string = '';
-        let searchDirection: string = '';
-        let staleSearchAfterNodeExpansions: number = -Infinity;
-        let totalNumberOfSubsetsEvaluated: number = -Infinity;
-        let meritOfBestSubsetFound: number = -Infinity;
-
+    private static extractAttributeSelectionSearchMethod(contentToParse: string): string {
         let regEx = /(?:Search Method:\n)((.|\n)*)(?:Attribute Subset Evaluator)/g;
         const regExResult = regEx.exec(contentToParse);
-        const searchMethodRaw: string = regExResult[1];
-        searchMethodRaw.split('\n').forEach((line, index) => {
-            line = this.removeLeadingTabs(line);
+        let searchMethodRaw: string = regExResult[1];
 
-            if(index === 0) {
-                regEx = /.*[^.]/g;
-                const regExResult = regEx.exec(line);
-                name = regExResult[0];
-            } else if(index === 1) {
-                regEx = /(?:\.*:\s)(.*)/g;
-                const regExResult = regEx.exec(line);
-                startSet = regExResult[1];
-            } else if(index === 2) {
-                regEx = /(?:\.*:\s)(.*)/g;
-                const regExResult = regEx.exec(line);
-                searchDirection = regExResult[1];
-            } else if(index === 3) {
-                regEx = /\d+/g;
-                const regExResult = regEx.exec(line);
-                staleSearchAfterNodeExpansions = Number.parseFloat(regExResult[0]);
-            } else if(index === 4) {
-                regEx = /\d+/g;
-                const regExResult = regEx.exec(line);
-                totalNumberOfSubsetsEvaluated = Number.parseFloat(regExResult[0]);
-            } else if(index === 5) {
-                regEx = /\d+\.?\d*/g;
-                const regExResult = regEx.exec(line);
-                meritOfBestSubsetFound = Number.parseFloat(regExResult[0]);
-            }
-        });
+        while(searchMethodRaw.includes('\t')) {
+            searchMethodRaw = searchMethodRaw.replace('\t', '');
+        }
 
-        return {
-            name: name,
-            startSet: startSet,
-            searchDirection: searchDirection,
-            staleSearchAfterNodeExpansions: staleSearchAfterNodeExpansions,
-            totalNumberOfSubsetsEvaluated: totalNumberOfSubsetsEvaluated,
-            meritOfBestSubsetFound: meritOfBestSubsetFound
-        };
+        searchMethodRaw = searchMethodRaw.replace('\n\n', '');
+
+        return searchMethodRaw;
     }
 
     private static extractAttributeSelectionAttributeSubsetEvaluator(contentToParse: string): string {
@@ -545,7 +511,8 @@ export class WekaResultParserUtils {
         return contentToParse.substring(startIndex, endIndex);
     }
 
-    private static extractAttributeSelectionSelectedAttributes(contentToParse: string, isGeneralOptionsXSet: boolean): SelectedAttributes {
+    private static extractAttributeSelectionSelectedAttributes(contentToParse: string,
+                                                               isGeneralOptionsXSet: boolean): SelectedAttributes {
         const attributeIndexes: number[] = [];
         let numberOfAttributes: number = -Infinity;
         const attributeNames: string[] = [];
