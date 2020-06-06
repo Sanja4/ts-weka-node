@@ -1,19 +1,29 @@
 import {WekaLibraryService} from './weka-library.service';
 import {SearchMethod} from '../enum/search-method.enum';
-import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
 import {GeneralOptions} from '../model/options/general-options.model';
 import {BestFirstOptions} from '../model/options/best-first-options.model';
 import {CfsSubsetEvalOptions} from '../model/options/cfs-subset-eval-options.model';
 import {EvaluatorType} from '../enum/evaluator-type.enum';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
+import {J48Options} from '../model/options/J48-options.model';
+import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
 
 describe('WekaLibraryService', () => {
 
-    const serviceUnderTest: WekaLibraryService = new WekaLibraryService('./output', './input', './src/bin/weka-3.9.3.jar');
+    const serviceUnderTest: WekaLibraryService = new WekaLibraryService('./output', './input', './src/bin');
 
     test('should learn random forest ', async() => {
-        const result: RandomForestContainer = await serviceUnderTest.learnRandomForest('test_dataset');
+        const result: ClassifierContainer = await serviceUnderTest.learnRandomForest('test_dataset');
         expect(result.options).toEqual('-num-slots 0 -I 100 -M 1 -depth 0 -print -attribute-importance');
+    });
+
+    test('should learn a J48 ', async() => {
+        const j48Options: J48Options = new J48Options({
+            U: true
+        });
+
+        const result: ClassifierContainer = await serviceUnderTest.learnJ48('test_dataset', true, new GeneralOptions(), j48Options);
+        expect(result).not.toBe(null);
     });
 
     test('should return the file path of an unbalanced file', async() => {

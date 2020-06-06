@@ -1,5 +1,5 @@
-import {RandomTree} from './random-tree.model';
 import {AttributeImportance} from '../evaluation/attribute-importance.model';
+import {DecisionTreeContainer} from './decision-tree-container.model';
 
 export class RandomForest {
 
@@ -10,7 +10,7 @@ export class RandomForest {
     classifierModelDescription: string;
 
     /** The base classifiers (random trees) */
-    totalModel: RandomTree[];
+    totalModel: DecisionTreeContainer[];
 
     constructor(params?: RandomForest) {
         Object.assign(this, params);

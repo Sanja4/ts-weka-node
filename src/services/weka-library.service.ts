@@ -9,11 +9,16 @@ import {BestFirstOptions} from '../model/options/best-first-options.model';
 import {GeneralOptions} from '../model/options/general-options.model';
 import {GlobalWekaOptions} from '../model/options/global-weka-options.model';
 import {RandomForestOptions} from '../model/options/random-forest-options.model';
-import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
 import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 import {EvaluatorType} from '../enum/evaluator-type.enum';
+import {J48Options} from '../model/options/J48-options.model';
+import {ClassifierType} from '../enum/classifier-type.enum';
+import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
+import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
+import {RandomForest} from '../model/classifiers/random-forest.model';
+import {J48} from '../model/classifiers/J48.model';
 
 const exec = require('child_process').exec;
 
@@ -102,14 +107,6 @@ export class WekaLibraryService {
     }
 
     /**
-     * Returns the path for the WEKA JARs to use (for the java -classpath argument).
-     * Multiple paths are joined using a semicolon (;).
-     */
-    private getClassPath(): string {
-        return path.join(this.binPath, '*');
-    }
-
-    /**
      * Balances the data set in the given file using weka.filters.supervised.instance.ClassBalancer.
      * The unbalanced (original) data set has to be in the directory provided by {@link getUnbalancedTrainingFilePath}.
      * The class attribute has to be the last attribute in the data set (option '-c last').
@@ -121,24 +118,25 @@ export class WekaLibraryService {
 
         // call Weka
         const command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.ClassBalancer`
-            + ` -c last`
-            + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
-            + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
+                                + ` -c last`
+                                + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
+                                + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
         console.log(`Executing command ${command}`);
 
         await this.executeCommand(command);
     }
 
-    public async resampleDataset(inputFilePath: string, outputFilePath: string, resampleOptions: ResampleOptions): Promise<void> {
+    public async resampleDataset(inputFilePath: string, outputFilePath: string,
+                                 resampleOptions: ResampleOptions): Promise<void> {
         console.log('resampleDataset ' + inputFilePath);
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.Resample`
-            + ` -c last`
-            + ` -S ${resampleOptions.seed}`
-            + ` -Z ${resampleOptions.sizeOutputDataset}`
-            + ` -B ${resampleOptions.biasFactor}`
-            + ` -i \"${inputFilePath}\"`
-            + ` -o \"${outputFilePath}\"`;
+                              + ` -c last`
+                              + ` -S ${resampleOptions.seed}`
+                              + ` -Z ${resampleOptions.sizeOutputDataset}`
+                              + ` -B ${resampleOptions.biasFactor}`
+                              + ` -i \"${inputFilePath}\"`
+                              + ` -o \"${outputFilePath}\"`;
 
         if(resampleOptions.noReplacement) {
             command += +` -no-replacement`;
@@ -155,9 +153,11 @@ export class WekaLibraryService {
         let searchMethodCommand: string = ``;
 
         if(searchMethod == SearchMethod.BEST_FIRST) {
-            searchMethodCommand += `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
+            searchMethodCommand +=
+                `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
         } else if(searchMethod == SearchMethod.EVOLUTIONARY_SEARCH) {
-            searchMethodCommand += `weka.attributeSelection.EvolutionarySearch -population-size 20 -generations 20 -init-op 0 -selection-op 1 -crossover-op 0 -crossover-probability 0.6 -mutation-op 0 -mutation-probability 0.1 -replacement-op 0 -seed 1 -report-frequency 20`;
+            searchMethodCommand +=
+                `weka.attributeSelection.EvolutionarySearch -population-size 20 -generations 20 -init-op 0 -selection-op 1 -crossover-op 0 -crossover-probability 0.6 -mutation-op 0 -mutation-probability 0.1 -replacement-op 0 -seed 1 -report-frequency 20`;
         } else if(searchMethod == SearchMethod.GENETIC_SEARCH) {
             searchMethodCommand += `weka.attributeSelection.GeneticSearch -Z 20 -G 20 -C 0.6 -M 0.033 -R 20 -S 1`;
         } else {
@@ -173,13 +173,62 @@ export class WekaLibraryService {
         }
     }
 
-    public async performCfsSubsetEval(options: CfsSubsetEvalOptions, generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
+    public async learnJ48(fileName: string, useBalancedArffFile?: boolean,
+                          generalOptions?: GeneralOptions,
+                          j48Options?: J48Options,
+                          enableLogging?: boolean,
+                          includeWekaOutput?: boolean) {
+
+        includeWekaOutput = includeWekaOutput != null ? includeWekaOutput : false;
+        useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
+        const trainingFilePath: string = useBalancedArffFile ? this.getBalancedTrainingFilePath(
+            fileName) : this.getUnbalancedTrainingFilePath(fileName);
+
+        if(generalOptions == null) {
+            generalOptions = new GeneralOptions();
+        }
+
+        if(j48Options == null) {
+            j48Options = new J48Options();
+        }
+
+        // call Weka
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.J48`
+                              + ` -t \"${trainingFilePath}\"`
+                              + ` -M ${j48Options.M}`;
+
+        if(j48Options.U) {
+            command += ` -U`;
+        }
+
+        if(generalOptions.x != null) {
+            command += ` -x ${generalOptions.x}`;
+        }
+
+        console.log(`Executing command ${command}`);
+
+        const output: string = await this.executeCommand(command);
+
+        if(enableLogging) {
+            console.log(output);
+        }
+
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(output, ClassifierType.J48, includeWekaOutput);
+
+        await this.storeClassifierResults(output, result, fileName);
+
+        return result;
+
+    }
+
+    public async performCfsSubsetEval(options: CfsSubsetEvalOptions,
+                                      generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.attributeSelection.CfsSubsetEval`
-            + ` -s \"${options.s}\"`
-            + ` -P ${options.P}`
-            + ` -E ${options.E}`
-            + ` -i \"${generalOptions.i}\"`
-            + ` -c last`;
+                              + ` -s \"${options.s}\"`
+                              + ` -P ${options.P}`
+                              + ` -E ${options.E}`
+                              + ` -i \"${generalOptions.i}\"`
+                              + ` -c last`;
 
         if(options.M) {
             command += +` -M`;
@@ -214,19 +263,15 @@ export class WekaLibraryService {
      * @param randomForestOptions - the random forest options to use
      * @param generalOptions - the general options (input file path not used)
      * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
-     * @param includeWekaOutput - if {@link RandomForestContainer.wekaOutput} should be included in the result
+     * @param includeWekaOutput - if {@link ClassifierContainer.wekaOutput} should be included in the result
      */
-    public learnRandomForest(fileName: string, useBalancedArffFile?: boolean,
-                             options?: GlobalWekaOptions,
-                             randomForestOptions?: RandomForestOptions,
-                             generalOptions?: GeneralOptions,
-                             enableLogging?: boolean,
-                             includeWekaOutput?: boolean): Promise<RandomForestContainer> {
-
-        if(includeWekaOutput == null) {
-            includeWekaOutput = false;
-        }
-
+    public async learnRandomForest(fileName: string, useBalancedArffFile?: boolean,
+                                   options?: GlobalWekaOptions,
+                                   randomForestOptions?: RandomForestOptions,
+                                   generalOptions?: GeneralOptions,
+                                   enableLogging?: boolean,
+                                   includeWekaOutput?: boolean): Promise<ClassifierContainer> {
+        includeWekaOutput = includeWekaOutput != null ? includeWekaOutput : false;
         useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
 
         const trainingFilePath: string = useBalancedArffFile ? this.getBalancedTrainingFilePath(
@@ -244,77 +289,81 @@ export class WekaLibraryService {
             randomForestOptions = new RandomForestOptions();
         }
 
-        return new Promise<RandomForestContainer>((resolve, reject) => {
-            // call Weka
-            let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`
-                + ` -t \"${trainingFilePath}\"`
-                + ` -num-slots ${options.numSlots}`
-                + ` -I ${randomForestOptions.numberOfIterations}`
-                + ` -M ${randomForestOptions.minNumberOfInstances}`
-                + ` -depth ${randomForestOptions.depth}`
-                + ` -print -attribute-importance`;
 
-            if(generalOptions.x != null) {
-                command += ` -x ${generalOptions.x}`;
-            }
+        // call Weka
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`
+                              + ` -t \"${trainingFilePath}\"`
+                              + ` -num-slots ${options.numSlots}`
+                              + ` -I ${randomForestOptions.numberOfIterations}`
+                              + ` -M ${randomForestOptions.minNumberOfInstances}`
+                              + ` -depth ${randomForestOptions.depth}`
+                              + ` -print -attribute-importance`;
 
-            console.log(`Executing command ${command}`);
+        if(generalOptions.x != null) {
+            command += ` -x ${generalOptions.x}`;
+        }
 
-            let stdoutData: string = '';
+        console.log(`Executing command ${command}`);
 
-            const ls = exec(command, {maxBuffer: 1024 * 600000}, (error: ExecException | null, stdout: Buffer,
-                                                                  stderr: Buffer) => {
-                if(error) {
-                    console.error(error);
-                }
-            });
+        const output: string = await this.executeCommand(command);
 
-            ls.stdout.on('data', (data) => {
-                stdoutData += data;
-            });
+        if(enableLogging) {
+            console.log(output);
+        }
 
-            ls.stderr.on('error', (data) => {
-                console.error(`stderr: ${data}`);
-            });
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(output, ClassifierType.RANDOM_FOREST, includeWekaOutput);
 
-            ls.on('close', async(code) => {
-                if(enableLogging) {
-                    console.log(stdoutData);
-                }
-                console.log(`Child process exited with code ${code}`);
+        await this.storeClassifierResults(output, result, fileName);
 
-                if(code != 0) {
-                    return reject(`Learning failed. Child process exited with code ${code}.`);
-                }
+        return result;
+    }
 
-                // store the full result to a file
-                !fs.existsSync(`${this.outputDirectory}/full/`) &&
-                fs.mkdirSync(`${this.outputDirectory}/full/`, {recursive: true});
+    private async storeClassifierResults(output: string, result: ClassifierContainer, fileName: string): Promise<void> {
+        // store the full result to a file
+        !fs.existsSync(`${this.outputDirectory}/full/`) &&
+        fs.mkdirSync(`${this.outputDirectory}/full/`, {recursive: true});
 
-                fs.writeFileSync(`${this.outputDirectory}/full/RandomForest_${this.getFileNameWithoutSuffix(fileName)}.txt`, stdoutData);
+        const prefix: string = result.type == ClassifierType.RANDOM_FOREST ? `RandomForest` : result.type == ClassifierType.J48 ? `J48`: ``;
 
-                const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(stdoutData, includeWekaOutput);
+        // store the final results in files
+        fs.writeFileSync(`${this.outputDirectory}/full/${prefix}_${this.getFileNameWithoutSuffix(fileName)}.txt`, output);
 
-                !fs.existsSync(`${this.outputDirectory}/attributeImportance/`)
-                && fs.mkdirSync(`${this.outputDirectory}/attributeImportance/`, {recursive: true});
-                !fs.existsSync(`${this.outputDirectory}/evaluation/`)
-                && fs.mkdirSync(`${this.outputDirectory}/evaluation/`, {recursive: true});
-                !fs.existsSync(`${this.outputDirectory}/classifiers/`) &&
-                fs.mkdirSync(`${this.outputDirectory}/classifiers/`, {recursive: true});
+        !fs.existsSync(`${this.outputDirectory}/evaluation/`)
+        && fs.mkdirSync(`${this.outputDirectory}/evaluation/`, {recursive: true});
+        !fs.existsSync(`${this.outputDirectory}/classifiers/`) &&
+        fs.mkdirSync(`${this.outputDirectory}/classifiers/`, {recursive: true});
 
-                // store the final result in files
-                await this.storeAttributeImportanceToFile(result.classifierModelFullTrainingSet.attributeImportance, fileName);
-                await this.storeEvaluationToFile(result.evaluationCrossValidation, fileName);
+        // ATTRIBUTE IMPORTANCE
 
-                let i: number = 0;
-                for(const classifier of result.classifierModelFullTrainingSet.totalModel) {
+        if(result.type == ClassifierType.RANDOM_FOREST) {
+            !fs.existsSync(`${this.outputDirectory}/attributeImportance/`)
+            && fs.mkdirSync(`${this.outputDirectory}/attributeImportance/`, {recursive: true});
+
+            await this.storeAttributeImportanceToFile((result.classifierModelFullTrainingSet as RandomForest).attributeImportance, fileName);
+        }
+
+        await this.storeEvaluationToFile(result.evaluationCrossValidation, fileName);
+
+        let i: number = 0;
+
+        if(result.classifierModelFullTrainingSet.totalModel instanceof DecisionTreeContainer) {
+            if(result.type == ClassifierType.RANDOM_FOREST) {
+                for(const classifier of (result.classifierModelFullTrainingSet as RandomForest).totalModel) {
                     await this.storeClassifierToFile(classifier.classifier, fileName, i);
                     i++;
                 }
+            } else if(result.type == ClassifierType.J48) {
+                await this.storeClassifierToFile((result.classifierModelFullTrainingSet as J48).totalModel.classifier, fileName, null);
+            }
+        }
+    }
 
-                resolve(result);
-            });
-        });
+    /**
+     * Returns the path for the WEKA JARs to use (for the java -classpath argument).
+     * Multiple paths are joined using a semicolon (;).
+     */
+    private getClassPath(): string {
+        return path.join(this.binPath, '*');
     }
 
     private executeCommand(command: string): Promise<string> {
@@ -394,10 +443,13 @@ export class WekaLibraryService {
     }
 
     private async storeClassifierToFile(classifier: string, fileName: string, index: number): Promise<void> {
-        const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}_${String(index
-            +
-            1)
-            .padStart(3, '0')}.txt`;
+        let suffix: string = ``;
+
+        if(index != null) {
+            suffix += `_${String(index + 1).padStart(3, '0')}`;
+        }
+
+        const filePath: string = `${this.outputDirectory}/classifiers/classifier_${this.getFileNameWithoutSuffix(fileName)}${suffix}.txt`;
 
         fs.writeFileSync(filePath, classifier);
         console.log(`Saved file ${filePath}`);

@@ -1,7 +1,12 @@
 import {RandomForest} from './random-forest.model';
 import {EvaluationResult} from '../evaluation/evaluation-result.model';
+import {ClassifierType} from '../../enum/classifier-type.enum';
+import {J48} from './J48.model';
 
-export class RandomForestContainer {
+export class ClassifierContainer {
+
+    /** The type of the classifier. Determines the type of the {@link classifierModelFullTrainingSet}. */
+    type: ClassifierType;
 
     /** The options of the RandomForest algorithm used. */
     options: string;
@@ -22,7 +27,7 @@ export class RandomForestContainer {
     evaluationCrossValidation: EvaluationResult;
 
     /** Classifier model for the full training set */
-    classifierModelFullTrainingSet: RandomForest;
+    classifierModelFullTrainingSet: RandomForest | J48;
 
     /** The full output of Weka. */
     wekaOutput: string;

@@ -1,5 +1,5 @@
 import {WekaResultParserUtils} from './weka-result-parser.utils';
-import {testResultString} from './test-data/testResultString';
+import {testResultStringRandomForest} from './test-data/testResultStringRandomForest';
 import {testAttributeImportance} from './test-data/testAttributeImportance';
 import {testRandomForestClassifierResult} from './test-data/testRandomForestClassifierResult';
 import {testCrossValidationResult} from './test-data/testCrossValidationResult';
@@ -8,26 +8,27 @@ import {testEvaluationResult2} from './test-data/testEvaluationResult2';
 import {testDetailedAccuracyByClass} from './test-data/testDetailedAccuracyByClass';
 import {testConfusionMatrix1} from './test-data/testConfusionMatrix1';
 import {testConfusionMatrix2} from './test-data/testConfusionMatrix2';
-import {testConfusionMatrix3} from "./test-data/testConfusionMatrix3";
-import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
+import {testConfusionMatrix3} from './test-data/testConfusionMatrix3';
 import {RandomForest} from '../model/classifiers/random-forest.model';
 import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {DetailedAccuracy} from '../model/evaluation/detailed-accuracy.model';
 import {ValidationOverview} from '../model/evaluation/validation-overview.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
 import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
+import {ClassifierType} from '../enum/classifier-type.enum';
+import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
 
 describe('WekaResultParserUtils', () => {
 
     test('should convert result', () => {
-        const result: RandomForestContainer = WekaResultParserUtils.parseRandomForestResult(testResultString, false);
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest, ClassifierType.RANDOM_FOREST,false);
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
         expect(result.timeTakenToPerformCrossValidation).toEqual(0.6);
     });
 
     test('should convert a single random forest classifier result', () => {
-        const result: RandomForest = WekaResultParserUtils.parseRandomForestClassifierResult(testRandomForestClassifierResult);
+        const result: RandomForest = WekaResultParserUtils.parseRandomForest(testRandomForestClassifierResult);
         expect(result.totalModel.length).toEqual(3);
         expect(result.totalModel[0].sizeOfTree).toEqual(477);
     });

@@ -1,4 +1,4 @@
-export const testResultString: string = `
+export const testResultStringRandomForest: string = `
 Options: -num-slots 0 -I 3 -M 20 -depth 0 -print -attribute-importance 
 
 === Classifier model (full training set) ===

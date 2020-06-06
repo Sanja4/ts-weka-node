@@ -3,7 +3,6 @@
  */
 
 import {WekaTreeParserUtils} from 'ts-weka/lib/utils/weka-tree-parser.utils';
-import {RandomForestContainer} from '../model/classifiers/random-forest-container.model';
 import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {RandomForest} from '../model/classifiers/random-forest.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
@@ -12,22 +11,28 @@ import {DetailedAccuracyByClass} from '../model/evaluation/detailed-accuracy-by-
 import {DetailedAccuracy} from '../model/evaluation/detailed-accuracy.model';
 import {ConfusionMatrixElement} from '../model/evaluation/confusion-matrix-element.model';
 import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
-import {RandomTree} from '../model/classifiers/random-tree.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 import {SelectedAttributes} from '../model/attribute-selection/selected-attributes.model';
 import {CrossValidationResult} from '../model/attribute-selection/cross-validation-result.model';
 import {CrossValidationResultDetail} from '../model/attribute-selection/cross-validation-result-detail.model';
+import {ClassifierType} from '../enum/classifier-type.enum';
+import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
+import {J48} from '../model/classifiers/J48.model';
+import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 
 export class WekaResultParserUtils {
 
     /**
      * Parses the Weka result of a trained RandomForest
      * @param resultString - the result as string (the same that can be seen in the GUI)
+     * @param classifierType - the type of the classifier/decision tree(s) to parse
+     * @param includeWekaOutput - if the weka output should be included in {@link ClassifierContainer.wekaOutput}
      * @returns the result as an object
      */
-    public static parseRandomForestResult(resultString: string, includeWekaOutput: boolean): RandomForestContainer {
+    public static parseClassifier(resultString: string, classifierType: ClassifierType,
+                                  includeWekaOutput: boolean): ClassifierContainer {
 
-        const result: RandomForestContainer = new RandomForestContainer();
+        const result: ClassifierContainer = new ClassifierContainer();
 
         if(includeWekaOutput) {
             result.wekaOutput = resultString;
@@ -53,8 +58,15 @@ export class WekaResultParserUtils {
         startIndex = resultString.search(startIdentifier);
         endIndex = resultString.search(endIdentifier);
         relevantSubString = resultString.substring(startIndex, endIndex);
-        result.classifierModelFullTrainingSet =
-            WekaResultParserUtils.parseRandomForestClassifierResult(relevantSubString);
+
+        if(classifierType == ClassifierType.RANDOM_FOREST) {
+            result.classifierModelFullTrainingSet =
+                WekaResultParserUtils.parseRandomForest(relevantSubString);
+        } else if(classifierType == ClassifierType.J48) {
+            result.classifierModelFullTrainingSet =
+                WekaResultParserUtils.parseJ48(relevantSubString);
+        }
+
         resultString = resultString.slice(endIndex);
 
         // TIME TAKEN TO BUILD MODEL
@@ -162,7 +174,7 @@ export class WekaResultParserUtils {
      * @param resultString - the result as string
      * @returns the result as object
      */
-    public static parseRandomForestClassifierResult(resultString: string): RandomForest {
+    public static parseRandomForest(resultString: string): RandomForest {
         const result: RandomForest = new RandomForest();
         let startIdentifier: string;
         let endIdentifier: string;
@@ -206,11 +218,11 @@ export class WekaResultParserUtils {
             const treeSizeString: string = resultString.substring(startIndex, endIndex);
             const treeSize: number = Number.parseFloat(treeSizeString);
 
-            const randomTree: RandomTree = {
+            const randomTree: DecisionTreeContainer = new DecisionTreeContainer({
                 classifier: model,
                 parsedClassifier: WekaTreeParserUtils.parse(model),
                 sizeOfTree: treeSize
-            };
+            });
 
             result.totalModel.push(randomTree);
             resultString = resultString.slice(endIndex);
@@ -219,7 +231,6 @@ export class WekaResultParserUtils {
         // ATTRIBUTE IMPORTANCE
         result.attributeImportance = WekaResultParserUtils.extractAttributeImportance(resultString);
 
-        // FINISHED
         return result;
     }
 
@@ -610,5 +621,42 @@ export class WekaResultParserUtils {
             seed: seed,
             crossValidationResultDetails: crossValidationResultDetails
         };
+    }
+
+    private static parseJ48(resultString: string): J48 {
+        const result: J48 = new J48();
+
+        let startIndex: number;
+        let endIndex: number;
+
+        // number of leaves
+        let regExp = /Number of Leaves\s\s:\s*(\d*)/gm;
+        let regExpResult = regExp.exec(resultString);
+        const numberOfLeaves: number = Number.parseInt(regExpResult[1]);
+
+        // tree size
+        regExp = /(?:Size of the tree :)\s*(.+)/gm;
+        // the regExp matches the following string (w/o quotes), for example: '0.39 (    11)  trajectorySimilarityTram'
+        regExpResult = regExp.exec(resultString);
+        const treeSize: number = Number.parseInt(regExpResult[1]);
+
+        // Model
+        let startIdentifier: string = '\n------------------\n\n';
+        let endIdentifier: string = '\n\nNumber of Leaves';
+        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+        endIndex = resultString.search(endIdentifier);
+        let model: string = resultString.substring(startIndex, endIndex);
+
+        const decisionTreeContainer: DecisionTreeContainer = new DecisionTreeContainer({
+            classifier: model,
+            // FIXME WekaTreeParserUtils.parse(model) can't parse the J48 currently because the first J48 node uses <= and the second >  (for Random Trees, the first uses >= and the second <) --> ts-weka updaten (classify benötigt damit auch den ClassifierType)
+            parsedClassifier: WekaTreeParserUtils.parse(model),
+            numberOfLeaves: numberOfLeaves,
+            sizeOfTree: treeSize
+        });
+
+        result.totalModel = decisionTreeContainer;
+
+        return result;
     }
 }
