@@ -297,6 +297,7 @@ export class WekaLibraryService {
                               + ` -I ${randomForestOptions.numberOfIterations}`
                               + ` -M ${randomForestOptions.minNumberOfInstances}`
                               + ` -depth ${randomForestOptions.depth}`
+                              + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
                               + ` -print -attribute-importance`;
 
         if(generalOptions.x != null) {

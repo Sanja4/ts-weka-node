@@ -14,7 +14,7 @@ describe('WekaLibraryService', () => {
 
     test('should learn random forest ', async() => {
         const result: ClassifierContainer = await serviceUnderTest.learnRandomForest('test_dataset');
-        expect(result.options).toEqual('-num-slots 0 -I 100 -M 1 -depth 0 -print -attribute-importance');
+        expect(result.options).toEqual('-num-slots 0 -I 100 -M 1 -depth 0 -num-decimal-places 2 -print -attribute-importance');
     });
 
     test('should learn a J48 ', async() => {
