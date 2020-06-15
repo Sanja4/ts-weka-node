@@ -15,13 +15,14 @@ export class WekaTreeParserUtils {
     /**
      * Parses the given decision tree
      * @param treeString - the string of the decision tree
+     * @param decisionTreeType - the type of the decision tree to parse
      * @returns the decision tree object
      */
     public static parse(treeString: string, decisionTreeType: DecisionTreeType): DecisionTree {
         // split by lines
         const splitTreeString: string[] = treeString.split('\n');
 
-        return this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
+       return this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
     }
 
     /**
@@ -117,7 +118,8 @@ export class WekaTreeParserUtils {
         return new DecisionTree({
             splitAttribute: splitAttribute,
             splitValue: splitValue,
-            children: children
+            children: children,
+            type: decisionTreeType
         } as DecisionTree);
     }
 

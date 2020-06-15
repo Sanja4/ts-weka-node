@@ -3,56 +3,59 @@ import {WekaClassificationUtils} from './weka-classification.utils';
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {Features} from '../model/features.model';
 import {Vote} from '../model/vote.model';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 
 describe('WekaClassificationUtils', () => {
 
-    test('should classify an instance as classT', () => {
-        const decisionTree: DecisionTree = WekaTreeParserUtils.parse(treeString1);
-        const features: Features = new Features();
-        features.featureB = 0.9;
+    describe('Random Tree', () => {
 
-        const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
-        expect(result.class).toEqual('classT');
-    });
+        test('should classify an instance as classT', () => {
+            const decisionTree: DecisionTree = WekaTreeParserUtils.parse(treeString1, DecisionTreeType.RANDOM_TREE);
+            const features: Features = new Features();
+            features.featureB = 0.9;
 
-    test('should classify an instance as classB', () => {
-        const decisionTree: DecisionTree = WekaTreeParserUtils.parse(treeString1);
-        const features: Features = new Features();
-        features.featureB = 0.8;
-        features.featureA = 0.5;
+            const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
+            expect(result.class).toEqual('classT');
+        });
 
-        const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
-        expect(result.class).toEqual('classB');
-    });
+        test('should classify an instance as classB', () => {
+            const decisionTree: DecisionTree = WekaTreeParserUtils.parse(treeString1, DecisionTreeType.RANDOM_TREE);
+            const features: Features = new Features();
+            features.featureB = 0.8;
+            features.featureA = 0.5;
 
-    test('should classify an instance as classS', () => {
-        const decisionTree: DecisionTree = WekaTreeParserUtils.parse(normalTreeString1);
-        const features: Features = new Features();
-        features.featureC = 'classS';
-        features.featureE = 'classS';
+            const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
+            expect(result.class).toEqual('classB');
+        });
 
-        const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
-        expect(result.class).toEqual('classS');
-    });
+        test('should classify an instance as classS', () => {
+            const decisionTree: DecisionTree = WekaTreeParserUtils.parse(normalTreeString1, DecisionTreeType.RANDOM_TREE);
+            const features: Features = new Features();
+            features.featureC = 'classS';
+            features.featureE = 'classS';
 
-    test('should classify an instance as classC', () => {
-        const decisionTree: DecisionTree = WekaTreeParserUtils.parse(normalTreeString1);
-        const features: Features = new Features();
-        features.featureC = 'classS';
-        features.featureE = 'classC';
-        features.featureD = 'classC';
+            const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
+            expect(result.class).toEqual('classS');
+        });
 
-        const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
-        expect(result.class).toEqual('classC');
-    });
-});
+        test('should classify an instance as classC from a Random Tree', () => {
+            const decisionTree: DecisionTree = WekaTreeParserUtils.parse(normalTreeString1, DecisionTreeType.RANDOM_TREE);
+            const features: Features = new Features();
+            features.featureC = 'classS';
+            features.featureE = 'classC';
+            features.featureD = 'classC';
 
-const treeString1: string = `featureB < 0.86
+            const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
+            expect(result.class).toEqual('classC');
+        });
+
+
+        const treeString1: string = `featureB < 0.86
 |   featureA < 0.49 : classT (71.53/0)
 |   featureA >= 0.49 : classB (0.11/0)
 featureB >= 0.86 : classT (1.23/0.22)`;
 
-const normalTreeString1: string = `featureC = classS
+        const normalTreeString1: string = `featureC = classS
 |   featureE = classS : classS (361/1)
 |   featureE = classW : classS (7/2)
 |   featureE = classB : classS (3/0)
@@ -185,7 +188,7 @@ featureC = classT
 |   |   featureE = classT : classT (239/21)
 |   featureD = classT2 : classS (0/0)
 |   featureD = classT : classS (0/0)`;
-
-
+    });
+});
 
 

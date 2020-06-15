@@ -2,6 +2,8 @@ import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
 import {Features} from '../model/features.model';
 import {Vote} from '../model/vote.model';
+import {MajorityVotingResult} from '../model/majority-voting-result.model';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 
 export class WekaClassificationUtils {
 
@@ -9,24 +11,22 @@ export class WekaClassificationUtils {
      * Classifies the given instance (features) using the given decision trees
      * @param features - the features of the instance to classify
      * @param decisionTrees - the decision trees to use for classification
-     * @param useMajorityVoting - if majority voting (only counting the number of votes) or summarizing the total weight per class should be used for aggregating the predictions per decision tree
      * @returns the predicted class
      */
     public static classifyMultiple(features: Features,
-                                   decisionTrees: DecisionTree[], useMajorityVoting: boolean): Vote {
+                                   decisionTrees: DecisionTree[]): MajorityVotingResult {
         // use a majority vote of all decision trees
         const votes: Vote[] = decisionTrees.map((decisionTree) => this.classify(features, decisionTree));
-        if(votes.length == 1) {
-            return votes[0];
-        }
 
-        // TODO if it is a boosted tree, use the weights
+        if(votes.length == 1) {
+            return new MajorityVotingResult({predictedClass: votes[0].class, predictedClassWeight: votes[0].weight, totalWeight: votes[0].weight});
+        }
 
         // count the weight of the votes per class
         const weightOfVotesPerClass: Map<string, number> = new Map<string, number>();
 
         for(const vote of votes) {
-            const weightToAdd: number = useMajorityVoting ? 1 : vote.weight;
+            const weightToAdd: number = vote.weight;
 
             if(weightOfVotesPerClass.has(vote.class)) {
                 weightOfVotesPerClass.set(vote.class, weightOfVotesPerClass.get(vote.class) + weightToAdd);
@@ -47,9 +47,12 @@ export class WekaClassificationUtils {
     public static classify(features: Features,
                            decisionTree: DecisionTree): Vote {
         // traverse the decision tree
-        // use a majority vote of all paths
-        const votes: DecisionTreeLeaf[] = this.traverseTreeOrLeaf(features, decisionTree);
-        return this.getMajorityVotingResult(votes);
+        // use a majority vote of all paths because there are multiple paths if a value is missing
+        const leaves: DecisionTreeLeaf[] = this.traverseTreeOrLeaf(features, decisionTree);
+
+        const predictedClass: string =  this.getMajorityVotingResultFromLeaves(leaves);
+
+        return new Vote({class: predictedClass, weight: decisionTree.weight})
     }
 
     /**
@@ -96,15 +99,7 @@ export class WekaClassificationUtils {
         } else {
             // recursive call
             if(typeof decisionTree.splitValue == 'number') {
-                // TODO differ based on tree type
-                // numeric split attribute
-                if((featureValue as number) < decisionTree.splitValue) {
-                    // use the left child
-                    return this.traverseTreeOrLeaf(features, decisionTree.children[0]);
-                } else {
-                    // use the right child
-                    return this.traverseTreeOrLeaf(features, decisionTree.children[1]);
-                }
+                return this.traverseNumericNode(decisionTree, featureValue as number, features);
             } else {
                 // enum split attribute
                 const index: number = (decisionTree.splitValue as string[]).findIndex((v) => v == featureValue);
@@ -113,28 +108,63 @@ export class WekaClassificationUtils {
         }
     }
 
-    private static getClassWithMaxVotes(numberOfVotesPerClass: Map<string, number>): Vote {
+    /**
+     * Traverses a node that has a numeric split value (and feature value)
+     * @param decisionTree - the decision tree with the numeric node as root
+     * @param featureValue - the feature value to use for the current node
+     * @param features - the feature values to use for classification
+     */
+    private static traverseNumericNode(decisionTree: DecisionTree, featureValue: number, features: Features): DecisionTreeLeaf[] {
+        // numeric split attribute; differ based on tree type
+        if(decisionTree.type == DecisionTreeType.RANDOM_TREE || decisionTree.type == DecisionTreeType.REP_TREE) {
+            if(featureValue < decisionTree.splitValue) {
+                // use the left child
+                return this.traverseTreeOrLeaf(features, decisionTree.children[0]);
+            } else {
+                // use the right child
+                return this.traverseTreeOrLeaf(features, decisionTree.children[1]);
+            }
+        } else if(decisionTree.type == DecisionTreeType.J48) {
+            if(featureValue <= decisionTree.splitValue) {
+                // use the left child
+                return this.traverseTreeOrLeaf(features, decisionTree.children[0]);
+            } else {
+                // use the right child
+                return this.traverseTreeOrLeaf(features, decisionTree.children[1]);
+            }
+        }
+
+        throw new Error(`Can't handle a decision tree of type ${decisionTree.type}`);
+    }
+
+    private static getClassWithMaxVotes(numberOfVotesPerClass: Map<string, number>): MajorityVotingResult {
         // find the maximum value; care: use -1 as start value and not 0 because for enum only trees, the total weight of a leaf might be 0
+        let sumVotes: number = 0;
         let maxWeightOfVotes: number = -1;
         let classWithMaxVotes: string;
 
         for(const [motionType, numberOfVotes] of numberOfVotesPerClass) {
+            sumVotes += numberOfVotes;
             if(numberOfVotes > maxWeightOfVotes) {
                 maxWeightOfVotes = numberOfVotes;
                 classWithMaxVotes = motionType;
             }
         }
 
-        return new Vote({class: classWithMaxVotes, weight: maxWeightOfVotes});
+        return new MajorityVotingResult({
+            predictedClass: classWithMaxVotes,
+            predictedClassWeight: maxWeightOfVotes,
+            totalWeight: sumVotes
+        });
     }
 
     /**
      * For the majority voting the weight of the class of each leaf is used {@link DecisionTreeLeaf.totalWeightCovered}
      * @param votes
      */
-    private static getMajorityVotingResult(votes: DecisionTreeLeaf[]): Vote {
+    private static getMajorityVotingResultFromLeaves(votes: DecisionTreeLeaf[]): string {
         if(votes.length == 1) {
-            return new Vote({class: votes[0].predictedClass, weight: votes[0].totalWeightCovered});
+            return votes[0].predictedClass;
         }
 
         // count the weight of the votes per class
@@ -149,6 +179,18 @@ export class WekaClassificationUtils {
             }
         }
 
-        return this.getClassWithMaxVotes(weightOfVotesPerClass);
+        let sumVotes: number = 0;
+        let maxWeightOfVotes: number = -1;
+        let classWithMaxVotes: string;
+
+        for(const [motionType, numberOfVotes] of weightOfVotesPerClass) {
+            sumVotes += numberOfVotes;
+            if(numberOfVotes > maxWeightOfVotes) {
+                maxWeightOfVotes = numberOfVotes;
+                classWithMaxVotes = motionType;
+            }
+        }
+
+        return classWithMaxVotes;
     }
 }

@@ -1,11 +1,12 @@
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
 import {WekaTreeParserUtils} from './weka-tree-parser.utils';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 
 describe('WekaTreeParserUtils', () => {
 
     describe('Binary Tree', () => {
-        test('should parse a leaf (1)', () => {
+        test('should parse a leaf of a Random Tree (1)', () => {
             const testLeaf: string = `featureB >= 0.86 : classT (1.23/0.22)`;
             const result: DecisionTreeLeaf = WekaTreeParserUtils.parseLeaf(testLeaf);
             expect(result.predictedClass).toEqual('classT');
@@ -13,7 +14,7 @@ describe('WekaTreeParserUtils', () => {
             expect(result.totalWeightMisclassified).toEqual(0.22);
         });
 
-        test('should parse a leaf (2)', () => {
+        test('should parse a leaf of a Random Tree (2)', () => {
             const testLeaf: string = `featureA < 0.49 : classT (71.53/0)`;
             const result: DecisionTreeLeaf = WekaTreeParserUtils.parseLeaf(testLeaf);
             expect(result.predictedClass).toEqual('classT');
@@ -21,8 +22,8 @@ describe('WekaTreeParserUtils', () => {
             expect(result.totalWeightMisclassified).toEqual(0);
         });
 
-        test('should parse a tree (1)', () => {
-            const result: DecisionTree = WekaTreeParserUtils.parse(binaryTreeString1);
+        test('should parse a Random tree (1)', () => {
+            const result: DecisionTree = WekaTreeParserUtils.parse(binaryTreeString1, DecisionTreeType.RANDOM_TREE);
             expect(result.splitValue).toEqual(0.86);
             expect(result.splitAttribute).toEqual('featureB');
             const leftChild: DecisionTree = result.children[0] as DecisionTree;
@@ -37,8 +38,8 @@ describe('WekaTreeParserUtils', () => {
             expect(rightChild.totalWeightMisclassified).toEqual(0.22);
         });
 
-        test('should parse a tree (2)', () => {
-            const result: DecisionTree = WekaTreeParserUtils.parse(binaryTreeString2);
+        test('should parse a Random tree (2)', () => {
+            const result: DecisionTree = WekaTreeParserUtils.parse(binaryTreeString2, DecisionTreeType.RANDOM_TREE);
             expect(result.splitValue).toEqual(4.99);
             expect(result.splitAttribute).toEqual('accumulatedTravelDistance');
             const leftChild: DecisionTree = result.children[0] as DecisionTree;
@@ -62,7 +63,7 @@ describe('WekaTreeParserUtils', () => {
         });
 
         test('should parse a tree (1)', () => {
-            const root: DecisionTree = WekaTreeParserUtils.parse(normalTreeString1);
+            const root: DecisionTree = WekaTreeParserUtils.parse(normalTreeString1, DecisionTreeType.RANDOM_TREE);
             expect(root.splitAttribute).toEqual('featureC');
 
             expect((root.splitValue as string[])[0]).toEqual('classS');

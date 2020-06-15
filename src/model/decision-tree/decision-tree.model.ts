@@ -1,4 +1,5 @@
 import {DecisionTreeLeaf} from './decision-tree-leaf.model';
+import {DecisionTreeType} from '../../enum/decision-tree-type.enum';
 
 // TODO
 export class DecisionTree {
@@ -16,6 +17,11 @@ export class DecisionTree {
      * {@link splitValue}[2], the associated child is {@link children}[2].
      */
     children: Array<DecisionTree | DecisionTreeLeaf>;
+
+    type: DecisionTreeType;
+
+    /** The weight of the decision tree when used in an esemble for classification. */
+    weight: number;
 
     constructor(params: DecisionTree) {
         Object.assign(this, params);
