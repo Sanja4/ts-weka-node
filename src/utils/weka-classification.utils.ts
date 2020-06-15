@@ -20,6 +20,8 @@ export class WekaClassificationUtils {
             return votes[0];
         }
 
+        // TODO if it is a boosted tree, use the weights
+
         // count the weight of the votes per class
         const weightOfVotesPerClass: Map<string, number> = new Map<string, number>();
 
