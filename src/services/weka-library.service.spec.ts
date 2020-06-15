@@ -7,6 +7,10 @@ import {EvaluatorType} from '../enum/evaluator-type.enum';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 import {J48Options} from '../model/options/J48-options.model';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
+import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
+import {DecisionTree} from '../model/decision-tree/decision-tree.model';
+import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
 
 describe('WekaLibraryService', () => {
 
@@ -23,7 +27,33 @@ describe('WekaLibraryService', () => {
         });
 
         const result: ClassifierContainer = await serviceUnderTest.learnJ48('test_dataset', true, new GeneralOptions(), j48Options);
-        expect(result).not.toBe(null);
+
+        expect(result).not.toBeNull();
+        expect(result.options).toBe('-M 1 -U');
+        expect((result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).type).toBe(DecisionTreeType.J48);
+        expect((result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).numberOfLeaves).toBe(739);
+        expect((result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).sizeOfTree).toBe(1477);
+        expect((result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).parsedClassifier.splitAttribute)
+            .toBe('featureD');
+        expect((result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).parsedClassifier.splitValue).toBe(1.48);
+        expect((result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).parsedClassifier.children.length).toBe(2);
+
+        let child: DecisionTree = (result.classifierModelFullTrainingSet.totalModel as DecisionTreeContainer).parsedClassifier.children[0] as DecisionTree;
+        expect(child.splitAttribute).toBe('featureE');
+        expect(child.splitValue).toBe(0.05);
+
+        child = child.children[0] as DecisionTree;
+        expect(child.splitAttribute).toBe('featureE');
+        expect(child.splitValue).toBe(0.03);
+
+        child = child.children[0] as DecisionTree;
+        expect(child.splitAttribute).toBe('featureM');
+        expect(child.splitValue).toBe(0.0467);
+
+        const leaf = child.children[0] as DecisionTreeLeaf;
+        expect(leaf.predictedClass).toBe('stationary');
+        expect(leaf.totalWeightCovered).toBe(620.93);
+        expect(leaf.totalWeightMisclassified).toBe(0);
     });
 
     test('should return the file path of an unbalanced file', async() => {
@@ -57,7 +87,8 @@ describe('WekaLibraryService', () => {
 
         const evaluatorOptions: CfsSubsetEvalOptions = new CfsSubsetEvalOptions();
 
-        const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL, evaluatorOptions, generalOptions,
+        const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL,
+            evaluatorOptions, generalOptions,
             SearchMethod.BEST_FIRST, bestFirstOptions);
 
         expect(result).not.toBeNull();
@@ -74,7 +105,8 @@ describe('WekaLibraryService', () => {
 
         const evaluatorOptions: CfsSubsetEvalOptions = new CfsSubsetEvalOptions();
 
-        const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL, evaluatorOptions, generalOptions,
+        const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL,
+            evaluatorOptions, generalOptions,
             SearchMethod.BEST_FIRST, bestFirstOptions);
 
         expect(result).not.toBeNull();

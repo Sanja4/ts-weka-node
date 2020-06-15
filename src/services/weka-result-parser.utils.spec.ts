@@ -19,24 +19,81 @@ import {ClassifierType} from '../enum/classifier-type.enum';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
 import {testAdaBoostM1REPTree} from './test-data/test-AdaBoostM1-REP-Tree';
 import {testAdaBoostM1J48} from './test-data/test-AdaBoostM1-J48';
+import {AdaBoostM1} from '../model/classifiers/ada-boost-m1.model';
+import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
+import {DecisionTree} from '../model/decision-tree/decision-tree.model';
+import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
 
 describe('WekaResultParserUtils', () => {
 
     test('should parse Random Forest result', () => {
-        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest, ClassifierType.RANDOM_FOREST,false);
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest,
+            ClassifierType.RANDOM_FOREST, false);
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
         expect(result.timeTakenToPerformCrossValidation).toEqual(0.6);
     });
 
     test('should parse AdaBoostM1 REP-Tree result', () => {
-        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1REPTree, ClassifierType.ADA_BOOST_M1_REP_TREE,false);
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1REPTree,
+            ClassifierType.ADA_BOOST_M1_REP_TREE, false);
         // TODO
     });
 
     test('should parse AdaBoostM1 J48 result', () => {
-        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1J48, ClassifierType.ADA_BOOST_M1_J48,false);
-        // TODO
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1J48, ClassifierType.ADA_BOOST_M1_J48,
+            false);
+
+        expect(result.timeTakenToBuildModel).toBe(5.43);
+        expect(result.timeTakenToTestModelOnTrainingData).toBeUndefined();
+        expect(result.type).toBe(ClassifierType.ADA_BOOST_M1_J48);
+        expect(result.options).toBeUndefined();
+
+        const classifierModelFullTrainingSet: AdaBoostM1 = result.classifierModelFullTrainingSet as AdaBoostM1;
+
+        expect(classifierModelFullTrainingSet.classifierModelDescription)
+            .toBe('weka.classifiers.meta.AdaBoostM1 -P 100 -S 1 -I 10 -W weka.classifiers.trees.J48 -- -C 0.25 -M 2');
+
+        const totalModels: DecisionTreeContainer[] = classifierModelFullTrainingSet.totalModel;
+        expect(classifierModelFullTrainingSet.totalModel.length).toBe(9);
+
+        const firstDecisionTreeContainer: DecisionTreeContainer = totalModels[0];
+
+        expect(firstDecisionTreeContainer.type).toBe(DecisionTreeType.J48);
+        expect(firstDecisionTreeContainer.classifier).not.toBeNull();
+        expect(firstDecisionTreeContainer.sizeOfTree).toBe(669);
+        expect(firstDecisionTreeContainer.numberOfLeaves).toBe(500);
+        expect(firstDecisionTreeContainer.parsedClassifier).not.toBeNull();
+
+        const firstParsedDecisionTree: DecisionTree = firstDecisionTreeContainer.parsedClassifier;
+        expect(firstParsedDecisionTree.type).toBe(DecisionTreeType.J48);
+        expect(firstParsedDecisionTree.weight).toBe(4);
+        expect(firstParsedDecisionTree.splitAttribute).toBe('feature1');
+        expect(firstParsedDecisionTree.splitValue).toStrictEqual(['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG']);
+
+        let child: DecisionTree | DecisionTreeLeaf = firstParsedDecisionTree.children[0] as DecisionTree;
+        expect(child.type).toBe(DecisionTreeType.J48);
+        expect(child.weight).toBeUndefined();
+        expect(child.splitAttribute).toBe('feature6');
+        expect(child.splitValue).toBe(0.6667);
+
+        child = child.children[0] as DecisionTree;
+        expect(child.type).toBe(DecisionTreeType.J48);
+        expect(child.weight).toBeUndefined();
+        expect(child.splitAttribute).toBe('feature3');
+        expect(child.splitValue).toStrictEqual(['classA', 'classB', 'classC', 'classD', 'classE', 'classF', 'classG']);
+
+        child = child.children[0] as DecisionTree;
+        expect(child.type).toBe(DecisionTreeType.J48);
+        expect(child.weight).toBeUndefined();
+        expect(child.splitAttribute).toBe('feature8');
+        expect(child.splitValue).toBe(0.5);
+
+        child = child.children[0] as DecisionTreeLeaf;
+        expect(child.predictedClass).toBe('classE');
+        expect(child.totalWeightCovered).toBe(3.86);
+        expect(child.totalWeightMisclassified).toBe(1.82);
     });
 
     test('should convert a single random forest classifier result', () => {
@@ -47,14 +104,14 @@ describe('WekaResultParserUtils', () => {
 
     test('should convert an evaluation result (1)', () => {
         const result: EvaluationResult = WekaResultParserUtils.parseEvaluationResult(testEvaluationResult1);
-        expect(result.title == 'Stratified cross-validation').toEqual(true);
+        expect(result.title).toBe('Stratified cross-validation');
         expect(result.overview.correctlyClassifiedInstancesAbsolute).toEqual(10948);
         expect(result.overview.totalWeightOfInstances).toEqual(11609);
     });
 
     test('should convert an evaluation result (2)', () => {
         const result: EvaluationResult = WekaResultParserUtils.parseEvaluationResult(testEvaluationResult2);
-        expect(result.title == 'Error on training data').toEqual(true);
+        expect(result.title).toBe('Error on training data');
         expect(result.overview.correctlyClassifiedInstancesAbsolute).toEqual(11297);
         expect(result.overview.totalWeightOfInstances).toEqual(11609);
     });
@@ -132,33 +189,78 @@ describe('WekaResultParserUtils', () => {
         expect(result.matrixElements.length).toEqual(7);
 
         expect(result.matrixElements[0].trueClass).toEqual('stationary');
-        const expected0 = [{predictedClass: 'stationary', weight: 970}, {
+        const expected0 = [{
+            predictedClass: 'stationary',
+            weight: 970
+        }, {
             predictedClass: 'walk',
             weight: 1
-        }, {predictedClass: 'bike', weight: 0}, {predictedClass: 'car', weight: 0}, {
+        }, {
+            predictedClass: 'bike',
+            weight: 0
+        }, {
+            predictedClass: 'car',
+            weight: 0
+        }, {
             predictedClass: 'bus',
             weight: 4
-        }, {predictedClass: 'tram', weight: 0}, {predictedClass: 'train', weight: 21}];
+        }, {
+            predictedClass: 'tram',
+            weight: 0
+        }, {
+            predictedClass: 'train',
+            weight: 21
+        }];
         expect(result.matrixElements[0].classifiedAs).toEqual(expected0);
 
         expect(result.matrixElements[4].trueClass).toEqual('bus');
-        const expected4 = [{predictedClass: 'stationary', weight: 4}, {predictedClass: 'walk', weight: 3}, {
+        const expected4 = [{
+            predictedClass: 'stationary',
+            weight: 4
+        }, {
+            predictedClass: 'walk',
+            weight: 3
+        }, {
             predictedClass: 'bike',
             weight: 1
-        }, {predictedClass: 'car', weight: 60}, {predictedClass: 'bus', weight: 1895}, {
+        }, {
+            predictedClass: 'car',
+            weight: 60
+        }, {
+            predictedClass: 'bus',
+            weight: 1895
+        }, {
             predictedClass: 'tram',
             weight: 0
-        }, {predictedClass: 'train', weight: 12}];
+        }, {
+            predictedClass: 'train',
+            weight: 12
+        }];
         expect(result.matrixElements[4].classifiedAs).toEqual(expected4);
 
         expect(result.matrixElements[6].trueClass).toEqual('train');
-        const expected6 = [{predictedClass: 'stationary', weight: 7}, {predictedClass: 'walk', weight: 0}, {
+        const expected6 = [{
+            predictedClass: 'stationary',
+            weight: 7
+        }, {
+            predictedClass: 'walk',
+            weight: 0
+        }, {
             predictedClass: 'bike',
             weight: 0
-        }, {predictedClass: 'car', weight: 19}, {predictedClass: 'bus', weight: 36}, {
+        }, {
+            predictedClass: 'car',
+            weight: 19
+        }, {
+            predictedClass: 'bus',
+            weight: 36
+        }, {
             predictedClass: 'tram',
             weight: 3
-        }, {predictedClass: 'train', weight: 1224}];
+        }, {
+            predictedClass: 'train',
+            weight: 1224
+        }];
         expect(result.matrixElements[6].classifiedAs).toEqual(expected6);
     });
 

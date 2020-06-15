@@ -122,7 +122,8 @@ export class WekaLibraryService {
         const allUnbalancedDatasetFilenames: string[] = await this.getAllUnbalancedDatasetFilenames();
         console.log('File names of all unbalanced data sets', allUnbalancedDatasetFilenames);
         for(const fileName of allUnbalancedDatasetFilenames) {
-            await this.resampleDataset(this.getUnbalancedTrainingFilePath(fileName), this.getBalancedTrainingFilePath(fileName), resampleOptions);
+            await this.resampleDataset(this.getUnbalancedTrainingFilePath(fileName), this.getBalancedTrainingFilePath(fileName),
+                resampleOptions);
         }
     }
 
@@ -138,9 +139,9 @@ export class WekaLibraryService {
 
         // call Weka
         const command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.ClassBalancer`
-                                + ` -c last`
-                                + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
-                                + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
+            + ` -c last`
+            + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
+            + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
         console.log(`Executing command ${command}`);
 
         await this.executeCommand(command);
@@ -151,12 +152,12 @@ export class WekaLibraryService {
         console.log('resampleDataset ' + inputFilePath);
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.Resample`
-                              + ` -c last`
-                              + ` -S ${resampleOptions.seed}`
-                              + ` -Z ${resampleOptions.sizeOutputDataset}`
-                              + ` -B ${resampleOptions.biasFactor}`
-                              + ` -i \"${inputFilePath}\"`
-                              + ` -o \"${outputFilePath}\"`;
+            + ` -c last`
+            + ` -S ${resampleOptions.seed}`
+            + ` -Z ${resampleOptions.sizeOutputDataset}`
+            + ` -B ${resampleOptions.biasFactor}`
+            + ` -i \"${inputFilePath}\"`
+            + ` -o \"${outputFilePath}\"`;
 
         if(resampleOptions.noReplacement) {
             command += +` -no-replacement`;
@@ -214,8 +215,8 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.J48`
-                              + ` -t \"${trainingFilePath}\"`
-                              + ` -M ${j48Options.M}`;
+            + ` -t \"${trainingFilePath}\"`
+            + ` -M ${j48Options.M}`;
 
         if(j48Options.U) {
             command += ` -U`;
@@ -238,17 +239,16 @@ export class WekaLibraryService {
         await this.storeClassifierResults(output, result, fileName);
 
         return result;
-
     }
 
     public async performCfsSubsetEval(options: CfsSubsetEvalOptions,
                                       generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.attributeSelection.CfsSubsetEval`
-                              + ` -s \"${options.s}\"`
-                              + ` -P ${options.P}`
-                              + ` -E ${options.E}`
-                              + ` -i \"${generalOptions.i}\"`
-                              + ` -c last`;
+            + ` -s \"${options.s}\"`
+            + ` -P ${options.P}`
+            + ` -E ${options.E}`
+            + ` -i \"${generalOptions.i}\"`
+            + ` -c last`;
 
         if(options.M) {
             command += +` -M`;
@@ -311,13 +311,13 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`
-                              + ` -t \"${trainingFilePath}\"`
-                              + ` -num-slots ${options.numSlots}`
-                              + ` -I ${randomForestOptions.numberOfIterations}`
-                              + ` -M ${randomForestOptions.minNumberOfInstances}`
-                              + ` -depth ${randomForestOptions.depth}`
-                              + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
-                              + ` -print -attribute-importance`;
+            + ` -t \"${trainingFilePath}\"`
+            + ` -num-slots ${options.numSlots}`
+            + ` -I ${randomForestOptions.numberOfIterations}`
+            + ` -M ${randomForestOptions.minNumberOfInstances}`
+            + ` -depth ${randomForestOptions.depth}`
+            + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
+            + ` -print -attribute-importance`;
 
         if(generalOptions.x != null) {
             command += ` -x ${generalOptions.x}`;
@@ -343,7 +343,7 @@ export class WekaLibraryService {
         !fs.existsSync(`${this.outputDirectory}/full/`) &&
         fs.mkdirSync(`${this.outputDirectory}/full/`, {recursive: true});
 
-        const prefix: string = result.type == ClassifierType.RANDOM_FOREST ? `RandomForest` : result.type == ClassifierType.J48 ? `J48`: ``;
+        const prefix: string = result.type == ClassifierType.RANDOM_FOREST ? `RandomForest` : result.type == ClassifierType.J48 ? `J48` : ``;
 
         // store the final results in files
         fs.writeFileSync(`${this.outputDirectory}/full/${prefix}_${this.getFileNameWithoutSuffix(fileName)}.txt`, output);
@@ -359,7 +359,8 @@ export class WekaLibraryService {
             !fs.existsSync(`${this.outputDirectory}/attributeImportance/`)
             && fs.mkdirSync(`${this.outputDirectory}/attributeImportance/`, {recursive: true});
 
-            await this.storeAttributeImportanceToFile((result.classifierModelFullTrainingSet as RandomForest).attributeImportance, fileName);
+            await this.storeAttributeImportanceToFile((result.classifierModelFullTrainingSet as RandomForest).attributeImportance,
+                fileName);
         }
 
         await this.storeEvaluationToFile(result.evaluationCrossValidation, fileName);

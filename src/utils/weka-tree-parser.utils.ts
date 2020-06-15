@@ -15,14 +15,14 @@ export class WekaTreeParserUtils {
     /**
      * Parses the given decision tree
      * @param treeString - the string of the decision tree
-     * @param decisionTreeType - the type of the decision tree to parse
+     * @param decisionTreeType - the decision tree type
      * @returns the decision tree object
      */
     public static parse(treeString: string, decisionTreeType: DecisionTreeType): DecisionTree {
         // split by lines
         const splitTreeString: string[] = treeString.split('\n');
 
-       return this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
+        return this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
     }
 
     /**
@@ -43,11 +43,23 @@ export class WekaTreeParserUtils {
 
         relevantSubstring = leafString.substring(startIndex);
 
-        const predictedClass: string = relevantSubstring.substring(0, relevantSubstring.indexOf('(') - 1) as string;
-        const totalWeightCoveredString: string = relevantSubstring.substring(relevantSubstring.indexOf('(') +
-            1, relevantSubstring.indexOf('/'));
-        const totalWeightMisclassifiedString = relevantSubstring.substring(relevantSubstring.indexOf('/') +
-            1, relevantSubstring.indexOf(')'));
+        const predictedClassRegExp = /(?::*\s*)(\S*)(?:\s*\()/gm;
+        let regExpResult = predictedClassRegExp.exec(relevantSubstring);
+        const predictedClass: string = regExpResult[1];
+
+        const totalWeightCoveredRegExp = /(?:\()(\d*\.*\d*)[\/)]+/gm;
+        regExpResult = totalWeightCoveredRegExp.exec(relevantSubstring);
+        const totalWeightCoveredString: string = regExpResult[1];
+
+        const totalWeightMisclassifiedRegExp = /(?:\(.*\/)(.*)(?:\))+/gm;
+        regExpResult = totalWeightMisclassifiedRegExp.exec(relevantSubstring);
+
+        let totalWeightMisclassifiedString;
+        if(regExpResult == null) {
+            totalWeightMisclassifiedString = 0;
+        } else {
+            totalWeightMisclassifiedString = regExpResult[1];
+        }
 
         return {
             predictedClass: predictedClass,
@@ -59,6 +71,7 @@ export class WekaTreeParserUtils {
     /**
      * Parses a node consisting of multiple lines. A node can be a decision tree or a leaf.
      * @param splitTreeString - the decision tree or leaf of the nodes line by line
+     * @param decisionTreeType - the decision tree type
      * @returns the decision tree or leaf of the node
      */
     // TODO enable parsing of Random Trees and REP-Trees
@@ -71,8 +84,7 @@ export class WekaTreeParserUtils {
         }
 
         // it is a tree
-        // TODO differ based on tree type
-        const identifierRegex = /(?:\S\s)(\D{1,2})(?:\s\S)+/gm; // matches '<', ':' or '>='
+        const identifierRegex = /(?:\S\s)(\D{1,2})(?:\s\S)+/gm; // matches '<', '>', ':', '>=', '<=', '='
         const identifierFirstLine = identifierRegex.exec(firstLine)[1];
 
         // ATTRIBUTE
@@ -80,8 +92,6 @@ export class WekaTreeParserUtils {
         const splitAttribute: string = firstLine.substring(0, splitAttributeEndIndex);
 
         // VALUE
-        const splitValueStartIndex: number = splitAttributeEndIndex + 3;
-
         let splitValueString: string;
         let splitValue: number | string[] = null;
         const children: Array<DecisionTree | DecisionTreeLeaf> = [];
@@ -91,14 +101,11 @@ export class WekaTreeParserUtils {
         // numeric attribute
         const rootNodeStrings: { line: string, index: number }[] = this.extractAllRootNodeStrings(splitTreeString);
 
-        rootNodeStrings.forEach(node => {
-            const indexOfColon: number = node.line.indexOf(':');
-            if(indexOfColon != -1) {
-                // there is a colon --> the split attribute points to a leaf
-                splitValueString = node.line.substring(splitValueStartIndex, indexOfColon - 1);
-            } else {
-                splitValueString = node.line.substring(splitValueStartIndex);
-            }
+        for(const node of rootNodeStrings) {
+            const splitValueRegex = /(?:(?:<=|>=|>|<|=)\s*)(\S*)(?:\s*:|\n|$)/gm;
+            const regexResult = splitValueRegex.exec(node.line);
+            splitValueString = regexResult[1];
+
             if(isNumericAttribute) {
                 splitValue = Number.parseFloat(splitValueString);
                 if(isNaN(splitValue)) {
@@ -113,7 +120,7 @@ export class WekaTreeParserUtils {
 
             const childTree: string[] = this.getChild(node.index, splitTreeString);
             children.push(this.parseNode(childTree, decisionTreeType));
-        });
+        }
 
         return new DecisionTree({
             splitAttribute: splitAttribute,
@@ -132,7 +139,12 @@ export class WekaTreeParserUtils {
     private static getChild(startIndex: number, tree: string[]): string[] {
         let firstLine = tree[startIndex];
         const child: string[] = [];
-        const leafIdentifier: string = ' : ';
+        const leafIdentifierRegex = /:/gm;
+        const regExpResult = leafIdentifierRegex.exec(firstLine);
+        let leafIdentifier: string;
+        if(regExpResult != null) {
+            leafIdentifier = regExpResult[0];
+        }
         const subTreeIdentifier: string = '|   ';
         let index: number = startIndex;
 

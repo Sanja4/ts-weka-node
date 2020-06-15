@@ -20,11 +20,13 @@ import {J48} from '../model/classifiers/J48.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {WekaTreeParserUtils} from '../utils/weka-tree-parser.utils';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
+import {AdaBoostM1} from '../model/classifiers/ada-boost-m1.model';
+import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 
 export class WekaResultParserUtils {
 
     /**
-     * Parses the Weka result of a trained RandomForest
+     * Parses the Weka result of depending on the given classifierType
      * @param resultString - the result as string (the same that can be seen in the GUI)
      * @param classifierType - the type of the classifier/decision tree(s) to parse
      * @param includeWekaOutput - if the weka output should be included in {@link ClassifierContainer.wekaOutput}
@@ -34,6 +36,7 @@ export class WekaResultParserUtils {
                                   includeWekaOutput: boolean): ClassifierContainer {
 
         const result: ClassifierContainer = new ClassifierContainer();
+        result.type = classifierType;
 
         if(includeWekaOutput) {
             result.wekaOutput = resultString;
@@ -46,29 +49,42 @@ export class WekaResultParserUtils {
         let relevantSubString: string;
 
         // OPTIONS
-        startIdentifier = 'Options: ';
-        endIdentifier = ' \n\n===';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
-        endIndex = resultString.search(endIdentifier);
-        result.options = resultString.substring(startIndex, endIndex);
-        resultString = resultString.slice(endIndex);
+        if(classifierType == ClassifierType.RANDOM_FOREST || classifierType == ClassifierType.J48) {
+            startIdentifier = 'Options: ';
+            endIdentifier = ' \n\n===';
+            startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+            endIndex = resultString.search(endIdentifier);
+            result.options = resultString.substring(startIndex, endIndex);
+            resultString = resultString.slice(endIndex);
+        }
+
+        // ADA BOOST SCHEME
+        let adaBoostM1J48Scheme: string;
+        if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
+            const schemeRegex = /(?:Scheme:\s*)(.*)/m;
+            adaBoostM1J48Scheme = schemeRegex.exec(resultString)[1];
+        }
 
         // CLASSIFIER MODEL FOR FULL TRAINING SET
-        startIdentifier = '=== Classifier model (full training set) ===';
+        if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
+            startIdentifier = /(=== Classifier model \(full training set\) ===)+/gm as any;
+        } else {
+            // TODO: ist das redundant?
+            startIdentifier = '=== Classifier model (full training set) ===';
+        }
         endIdentifier = '\nTime taken to build model:';
+
         startIndex = resultString.search(startIdentifier);
         endIndex = resultString.search(endIdentifier);
         relevantSubString = resultString.substring(startIndex, endIndex);
 
         if(classifierType == ClassifierType.RANDOM_FOREST) {
-            result.classifierModelFullTrainingSet =
-                WekaResultParserUtils.parseRandomForest(relevantSubString);
+            result.classifierModelFullTrainingSet = WekaResultParserUtils.parseRandomForest(relevantSubString);
         } else if(classifierType == ClassifierType.J48) {
             // TODO
-            result.classifierModelFullTrainingSet =
-                WekaResultParserUtils.parseJ48(relevantSubString);
+            result.classifierModelFullTrainingSet = WekaResultParserUtils.parseJ48(relevantSubString);
         } else if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
-            // TODO
+            result.classifierModelFullTrainingSet = WekaResultParserUtils.parseAdaBoostM1J48(relevantSubString, adaBoostM1J48Scheme);
         } else if(classifierType == ClassifierType.ADA_BOOST_M1_REP_TREE) {
             // TODO
         }
@@ -86,31 +102,37 @@ export class WekaResultParserUtils {
 
         // Time taken to test model on training data
         startIdentifier = 'Time taken to test model on training data: ';
-        endIdentifier = ' seconds';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
-        endIndex = resultString.search(endIdentifier);
-        relevantSubString = resultString.substring(startIndex, endIndex);
-        result.timeTakenToTestModelOnTrainingData = Number.parseFloat(relevantSubString);
-        resultString = resultString.slice(endIndex + endIdentifier.length);
+        if(resultString.includes(startIdentifier)) {
+            endIdentifier = ' seconds';
+            startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+            endIndex = resultString.search(endIdentifier);
+            relevantSubString = resultString.substring(startIndex, endIndex);
+            result.timeTakenToTestModelOnTrainingData = Number.parseFloat(relevantSubString);
+            resultString = resultString.slice(endIndex + endIdentifier.length);
+        }
 
         // Error on training data
         startIdentifier = '=== Error on training data ===';
-        endIdentifier = 'Time taken to perform cross-validation: ';
-        startIndex = resultString.search(startIdentifier);
-        endIndex = resultString.search(endIdentifier);
-        relevantSubString = resultString.substring(startIndex, endIndex);
-        result.evaluationOnTrainingData = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
-        resultString = resultString.slice(endIndex);
+        if(resultString.includes(startIdentifier)) {
+            endIdentifier = 'Time taken to perform cross-validation: ';
+            startIndex = resultString.search(startIdentifier);
+            endIndex = resultString.search(endIdentifier);
+            relevantSubString = resultString.substring(startIndex, endIndex);
+            result.evaluationOnTrainingData = WekaResultParserUtils.parseEvaluationResult(relevantSubString);
+            resultString = resultString.slice(endIndex);
+        }
 
         // CROSS VALIDATION CLASSIFIER MODELS (skipped)
 
         // TIME TAKEN FOR CROSS-VALIDATION
         startIdentifier = 'Time taken to perform cross-validation: ';
-        endIdentifier = ' seconds\n\n';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
-        endIndex = resultString.search(endIdentifier);
-        result.timeTakenToPerformCrossValidation = Number.parseFloat(resultString.substring(startIndex, endIndex));
-        resultString = resultString.slice(endIndex);
+        if(resultString.includes(startIdentifier)) {
+            endIdentifier = ' seconds\n\n';
+            startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+            endIndex = resultString.search(endIdentifier);
+            result.timeTakenToPerformCrossValidation = Number.parseFloat(resultString.substring(startIndex, endIndex));
+            resultString = resultString.slice(endIndex);
+        }
 
         // Evaluation of the cross validation
         startIdentifier = '=== Stratified cross-validation ===';
@@ -129,23 +151,23 @@ export class WekaResultParserUtils {
      */
     public static parseEvaluationResult(resultString: string): EvaluationResult {
         const result: EvaluationResult = new EvaluationResult();
-        let startIdentifier: string;
-        let endIdentifier: string;
+        let startIdentifier;
+        let endIdentifier;
         let startIndex: number;
         let endIndex: number;
 
         // TITLE
-        startIdentifier = '=== ';
-        endIdentifier = ' ===\n\n';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+        startIdentifier = /(?:===\s*)(.*)(?:\s*===$)/m;
+        const regexResult = startIdentifier.exec(resultString);
+        endIdentifier = '\nCorrectly';
         endIndex = resultString.search(endIdentifier);
-        result.title = resultString.substring(startIndex, endIndex);
+        result.title = regexResult[1].trim();
         resultString = resultString.slice(endIndex);
 
         // CROSS VALIDATION RESULTS
-        startIdentifier = '===\n\n';
-        endIdentifier = '\n\n\n=== Detailed Accuracy By Class ===';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+        startIdentifier = /Correctly/m;
+        endIdentifier = /\n*=== Detailed Accuracy By Class ===/gm;
+        startIndex = resultString.search(startIdentifier);
         endIndex = resultString.search(endIdentifier);
         const crossValidationResultString = resultString.substring(startIndex, endIndex);
         result.overview = this.extractCrossValidationResult(crossValidationResultString);
@@ -228,8 +250,7 @@ export class WekaResultParserUtils {
                 classifier: model,
                 parsedClassifier: WekaTreeParserUtils.parse(model, DecisionTreeType.RANDOM_TREE),
                 sizeOfTree: treeSize,
-                type: DecisionTreeType.RANDOM_TREE,
-                weight: 1
+                type: DecisionTreeType.RANDOM_TREE
             });
 
             result.totalModel.push(randomTree);
@@ -632,11 +653,12 @@ export class WekaResultParserUtils {
     }
 
     private static parseJ48(resultString: string): J48 {
-        const result: J48 = new J48();
+        return new J48({
+            totalModel: this.parseJ48DecisionTree(resultString)
+        });
+    }
 
-        let startIndex: number;
-        let endIndex: number;
-
+    private static parseJ48DecisionTree(resultString: string): DecisionTreeContainer {
         // number of leaves
         let regExp = /Number of Leaves\s\s:\s*(\d*)/gm;
         let regExpResult = regExp.exec(resultString);
@@ -648,23 +670,53 @@ export class WekaResultParserUtils {
         regExpResult = regExp.exec(resultString);
         const treeSize: number = Number.parseInt(regExpResult[1]);
 
-        // Model
-        let startIdentifier: string = '\n------------------\n\n';
-        let endIdentifier: string = '\n\nNumber of Leaves';
-        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
-        endIndex = resultString.search(endIdentifier);
-        let model: string = resultString.substring(startIndex, endIndex);
+        // weight
+        regExp = /(?:Weight:\s*)(.*)/gm;
+        regExpResult = regExp.exec(resultString);
+        let weight: number = 1;
 
-        result.totalModel = new DecisionTreeContainer({
+        if(regExpResult != null) {
+            weight = Number.parseFloat(regExpResult[1]);
+        }
+
+        // Model
+        const startIdentifier: string = '\n------------------\n\n';
+        const endIdentifier: string = '\n\nNumber of Leaves';
+        const startIndex: number = resultString.search(startIdentifier) + startIdentifier.length;
+        const endIndex: number = resultString.search(endIdentifier);
+        const model: string = resultString.substring(startIndex, endIndex);
+
+        const parsedClassifier: DecisionTree = WekaTreeParserUtils.parse(model, DecisionTreeType.J48);
+        parsedClassifier.weight = weight;
+
+        return new DecisionTreeContainer({
             classifier: model,
-            // FIXME WekaTreeParserUtils.parse(model) can't parse the J48 currently because the first J48 node uses <= and the second >  (for Random Trees, the first uses >= and the second <) --> ts-weka updaten (classify benötigt damit auch den ClassifierType)
-            parsedClassifier: WekaTreeParserUtils.parse(model, DecisionTreeType.J48),
+            parsedClassifier: parsedClassifier,
             numberOfLeaves: numberOfLeaves,
             sizeOfTree: treeSize,
-            type: DecisionTreeType.J48,
-            weight: 1
+            type: DecisionTreeType.J48
         });
+    }
 
-        return result;
+    private static parseAdaBoostM1J48(adaBoostM1J48String: string, adaBoostM1J48Scheme: string): AdaBoostM1 {
+        let startIdentifier: string = '\nJ48';
+        let endIdentifierRegex;
+
+        const adaBoostM1: AdaBoostM1 = new AdaBoostM1();
+        adaBoostM1.classifierModelDescription = adaBoostM1J48Scheme;
+
+        while(adaBoostM1J48String.includes('J48')) {
+            endIdentifierRegex = /(Weight:\s*.*)/gm;
+            const startIndex: number = adaBoostM1J48String.search(startIdentifier);
+            const endIndex: number = adaBoostM1J48String.search(endIdentifierRegex) + endIdentifierRegex.exec(
+                adaBoostM1J48String)[0].length;
+            const adaBoostString: string = adaBoostM1J48String.slice(startIndex, endIndex);
+            adaBoostM1J48String = adaBoostM1J48String.substr(endIndex + 1);
+
+            const j48DecisionTree: DecisionTreeContainer = this.parseJ48DecisionTree(adaBoostString);
+            adaBoostM1.totalModel.push(j48DecisionTree);
+        }
+
+        return adaBoostM1;
     }
 }

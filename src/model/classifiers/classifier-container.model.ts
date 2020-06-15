@@ -9,7 +9,7 @@ export class ClassifierContainer {
     /** The type of the classifier. Determines the type of the {@link classifierModelFullTrainingSet}. */
     type: ClassifierType;
 
-    /** The options of the RandomForest algorithm used. */
+    /** The options used for the WEKA algorithm. */
     options: string;
 
     /** Time taken to perform cross-validation (in seconds)*/

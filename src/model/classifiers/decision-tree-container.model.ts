@@ -9,9 +9,6 @@ export class DecisionTreeContainer extends DecisionTreeAsString {
 
     type: DecisionTreeType;
 
-    /** For boosted trees each tree might have a weight. */
-    weight: number = 1;
-
     constructor(params?: DecisionTreeContainer) {
         super(params);
         Object.assign(this, params);

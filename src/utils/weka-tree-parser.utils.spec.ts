@@ -74,7 +74,6 @@ describe('WekaTreeParserUtils', () => {
             expect((root.splitValue as string[])[5]).toEqual('classT2');
             expect((root.splitValue as string[])[6]).toEqual('classT');
 
-
             // ----- child1 -----
             const child1: DecisionTree = root.children[0] as DecisionTree;
             expect(child1.splitAttribute).toEqual('featureE');

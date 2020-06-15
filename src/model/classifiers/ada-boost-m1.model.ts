@@ -5,5 +5,5 @@ export class AdaBoostM1 {
     classifierModelDescription: string;
 
     /** The base classifiers (rep trees) */
-    totalModel: DecisionTreeContainer[];
+    totalModel: DecisionTreeContainer[] = [];
 }

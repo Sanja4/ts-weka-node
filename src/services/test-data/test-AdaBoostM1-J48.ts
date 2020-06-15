@@ -16,7 +16,7 @@ Attributes:   10
               trueLabel
 Test mode:    10-fold cross-validation
 
-=== Classifier model (full trainig set) ===
+=== Classifier model (full training set) ===
 
 AdaBoostM1: Base classifiers and their weights: 
 
