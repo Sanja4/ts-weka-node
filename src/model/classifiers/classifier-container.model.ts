@@ -2,6 +2,7 @@ import {RandomForest} from './random-forest.model';
 import {EvaluationResult} from '../evaluation/evaluation-result.model';
 import {ClassifierType} from '../../enum/classifier-type.enum';
 import {J48} from './J48.model';
+import {AdaBoostM1} from './ada-boost-m1.model';
 
 export class ClassifierContainer {
 
@@ -27,7 +28,7 @@ export class ClassifierContainer {
     evaluationCrossValidation: EvaluationResult;
 
     /** Classifier model for the full training set */
-    classifierModelFullTrainingSet: RandomForest | J48;
+    classifierModelFullTrainingSet: RandomForest | J48 | AdaBoostM1;
 
     /** The full output of Weka. */
     wekaOutput: string;

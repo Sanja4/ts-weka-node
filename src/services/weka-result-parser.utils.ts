@@ -19,6 +19,7 @@ import {ClassifierContainer} from '../model/classifiers/classifier-container.mod
 import {J48} from '../model/classifiers/J48.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {WekaTreeParserUtils} from '../utils/weka-tree-parser.utils';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 
 export class WekaResultParserUtils {
 
@@ -63,8 +64,13 @@ export class WekaResultParserUtils {
             result.classifierModelFullTrainingSet =
                 WekaResultParserUtils.parseRandomForest(relevantSubString);
         } else if(classifierType == ClassifierType.J48) {
+            // TODO
             result.classifierModelFullTrainingSet =
                 WekaResultParserUtils.parseJ48(relevantSubString);
+        } else if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
+            // TODO
+        } else if(classifierType == ClassifierType.ADA_BOOST_M1_REP_TREE) {
+            // TODO
         }
 
         resultString = resultString.slice(endIndex);
@@ -220,8 +226,10 @@ export class WekaResultParserUtils {
 
             const randomTree: DecisionTreeContainer = new DecisionTreeContainer({
                 classifier: model,
-                parsedClassifier: WekaTreeParserUtils.parse(model),
-                sizeOfTree: treeSize
+                parsedClassifier: WekaTreeParserUtils.parse(model, DecisionTreeType.RANDOM_TREE),
+                sizeOfTree: treeSize,
+                type: DecisionTreeType.RANDOM_TREE,
+                weight: 1
             });
 
             result.totalModel.push(randomTree);
@@ -647,15 +655,15 @@ export class WekaResultParserUtils {
         endIndex = resultString.search(endIdentifier);
         let model: string = resultString.substring(startIndex, endIndex);
 
-        const decisionTreeContainer: DecisionTreeContainer = new DecisionTreeContainer({
+        result.totalModel = new DecisionTreeContainer({
             classifier: model,
             // FIXME WekaTreeParserUtils.parse(model) can't parse the J48 currently because the first J48 node uses <= and the second >  (for Random Trees, the first uses >= and the second <) --> ts-weka updaten (classify benötigt damit auch den ClassifierType)
-            parsedClassifier: WekaTreeParserUtils.parse(model),
+            parsedClassifier: WekaTreeParserUtils.parse(model, DecisionTreeType.J48),
             numberOfLeaves: numberOfLeaves,
-            sizeOfTree: treeSize
+            sizeOfTree: treeSize,
+            type: DecisionTreeType.J48,
+            weight: 1
         });
-
-        result.totalModel = decisionTreeContainer;
 
         return result;
     }

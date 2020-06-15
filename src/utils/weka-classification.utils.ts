@@ -94,6 +94,7 @@ export class WekaClassificationUtils {
         } else {
             // recursive call
             if(typeof decisionTree.splitValue == 'number') {
+                // TODO differ based on tree type
                 // numeric split attribute
                 if((featureValue as number) < decisionTree.splitValue) {
                     // use the left child

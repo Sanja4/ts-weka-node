@@ -4,6 +4,7 @@
 
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 
 /**
  * Helper class to parse a decision tree from Weka with numerical attributes.
@@ -16,11 +17,11 @@ export class WekaTreeParserUtils {
      * @param treeString - the string of the decision tree
      * @returns the decision tree object
      */
-    public static parse(treeString: string): DecisionTree {
+    public static parse(treeString: string, decisionTreeType: DecisionTreeType): DecisionTree {
         // split by lines
         const splitTreeString: string[] = treeString.split('\n');
 
-        return this.parseNode(splitTreeString) as DecisionTree;
+        return this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
     }
 
     /**
@@ -59,7 +60,8 @@ export class WekaTreeParserUtils {
      * @param splitTreeString - the decision tree or leaf of the nodes line by line
      * @returns the decision tree or leaf of the node
      */
-    private static parseNode(splitTreeString: string[]): DecisionTree | DecisionTreeLeaf {
+    // TODO enable parsing of Random Trees and REP-Trees
+    private static parseNode(splitTreeString: string[], decisionTreeType: DecisionTreeType): DecisionTree | DecisionTreeLeaf {
         let firstLine: string = splitTreeString[0];
 
         if(splitTreeString.length == 1) {
@@ -68,6 +70,7 @@ export class WekaTreeParserUtils {
         }
 
         // it is a tree
+        // TODO differ based on tree type
         const identifierRegex = /(?:\S\s)(\D{1,2})(?:\s\S)+/gm; // matches '<', ':' or '>='
         const identifierFirstLine = identifierRegex.exec(firstLine)[1];
 
@@ -108,7 +111,7 @@ export class WekaTreeParserUtils {
             }
 
             const childTree: string[] = this.getChild(node.index, splitTreeString);
-            children.push(this.parseNode(childTree));
+            children.push(this.parseNode(childTree, decisionTreeType));
         });
 
         return new DecisionTree({

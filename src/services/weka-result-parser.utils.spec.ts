@@ -17,14 +17,26 @@ import {AttributeImportance} from '../model/evaluation/attribute-importance.mode
 import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
 import {ClassifierType} from '../enum/classifier-type.enum';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
+import {testAdaBoostM1REPTree} from './test-data/test-AdaBoostM1-REP-Tree';
+import {testAdaBoostM1J48} from './test-data/test-AdaBoostM1-J48';
 
 describe('WekaResultParserUtils', () => {
 
-    test('should convert result', () => {
+    test('should parse Random Forest result', () => {
         const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest, ClassifierType.RANDOM_FOREST,false);
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
         expect(result.timeTakenToPerformCrossValidation).toEqual(0.6);
+    });
+
+    test('should parse AdaBoostM1 REP-Tree result', () => {
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1REPTree, ClassifierType.ADA_BOOST_M1_REP_TREE,false);
+        // TODO
+    });
+
+    test('should parse AdaBoostM1 J48 result', () => {
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1J48, ClassifierType.ADA_BOOST_M1_J48,false);
+        // TODO
     });
 
     test('should convert a single random forest classifier result', () => {
