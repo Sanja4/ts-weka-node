@@ -2,7 +2,6 @@
  * Utils class to parse a result of a Weka training.
  */
 
-import {WekaTreeParserUtils} from 'ts-weka/lib/utils/weka-tree-parser.utils';
 import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {RandomForest} from '../model/classifiers/random-forest.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
@@ -19,6 +18,7 @@ import {ClassifierType} from '../enum/classifier-type.enum';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
 import {J48} from '../model/classifiers/J48.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
+import {WekaTreeParserUtils} from '../utils/weka-tree-parser.utils';
 
 export class WekaResultParserUtils {
 

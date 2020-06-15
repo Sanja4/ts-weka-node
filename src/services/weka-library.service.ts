@@ -45,6 +45,28 @@ export class WekaLibraryService {
         return directoryName;
     }
 
+    /**
+     * @returns the path to the directory where the service expects the balanced data sets as arff files.
+     * Creates the directory if it does not exist.
+     */
+    public getBalancedDataSetsDirectory(): string {
+        const directoryName: string = `${this.inputDirectory}/datasets/balanced/`;
+        !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
+        return directoryName;
+    }
+
+    public getTestUnbalancedDataSetsDirectory(): string {
+        const directoryName: string = `${this.inputDirectory}/datasets/test/unbalanced/`;
+        !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
+        return directoryName;
+    }
+
+    public getTestBalancedDataSetsDirectory(): string {
+        const directoryName: string = `${this.inputDirectory}/datasets/test/balanced/`;
+        !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
+        return directoryName;
+    }
+
     public getInitialUnbalancedDataSetsDirectory(): string {
         const directoryName: string = `${this.inputDirectory}/datasets/initial/unbalanced/`;
         !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
@@ -53,16 +75,6 @@ export class WekaLibraryService {
 
     public getInitialBalancedDataSetsDirectory(): string {
         const directoryName: string = `${this.inputDirectory}/datasets/initial/balanced/`;
-        !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
-        return directoryName;
-    }
-
-    /**
-     * @returns the path to the directory where the service expects the balanced data sets as arff files.
-     * Creates the directory if it does not exist.
-     */
-    public getBalancedDataSetsDirectory(): string {
-        const directoryName: string = `${this.inputDirectory}/datasets/balanced/`;
         !fs.existsSync(directoryName) && fs.mkdirSync(directoryName, {recursive: true});
         return directoryName;
     }
@@ -81,6 +93,14 @@ export class WekaLibraryService {
 
     public getInitialBalancedFilePath(fileName: string): string {
         return path.join(this.getInitialBalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
+    }
+
+    public getTestUnbalancedFilePath(fileName: string): string {
+        return path.join(this.getTestUnbalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
+    }
+
+    public getTestBalancedFilePath(fileName: string): string {
+        return path.join(this.getTestBalancedDataSetsDirectory(), this.appendArffSuffix(fileName));
     }
 
     /**
@@ -288,7 +308,6 @@ export class WekaLibraryService {
         if(randomForestOptions == null) {
             randomForestOptions = new RandomForestOptions();
         }
-
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`

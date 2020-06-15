@@ -1,5 +1,5 @@
-import {DecisionTree} from 'ts-weka/lib/model/decision-tree/decision-tree.model';
 import {DecisionTreeAsString} from './decision-tree-as-string.model';
+import {DecisionTree} from '../decision-tree/decision-tree.model';
 
 export class DecisionTreeContainer extends DecisionTreeAsString {
 
