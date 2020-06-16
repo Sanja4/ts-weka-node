@@ -1,20 +1,5 @@
-export const testAdaBoostM1J48: string = `=== Run information ===
-
-Scheme:       weka.classifiers.meta.AdaBoostM1 -P 100 -S 1 -I 10 -W weka.classifiers.trees.J48 -- -C 0.25 -M 2
-Relation:     MetatrueLabelData-weka.filters.supervised.instance.Resample-B1.0-S1-Z100.0-weka.filters.unsupervised.attribute.Remove-R11-weka.filters.unsupervised.attribute.Remove-R11-weka.filters.unsupervised.attribute.Remove-R6
-Instances:    25151
-Attributes:   10
-              feature1
-              feature2
-              feature3
-              feature4
-              feature5
-              feature6
-              feature7
-              feature8
-              feature9
-              trueLabel
-Test mode:    10-fold cross-validation
+export const testAdaBoostM1J48: string = `
+Options: -I 10 -W weka.classifiers.trees.J48 -- -C 0.25 -M 2 
 
 === Classifier model (full training set) ===
 

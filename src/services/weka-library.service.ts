@@ -19,6 +19,8 @@ import {ClassifierContainer} from '../model/classifiers/classifier-container.mod
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {RandomForest} from '../model/classifiers/random-forest.model';
 import {J48} from '../model/classifiers/J48.model';
+import {DecisionTreeType} from '../enum/decision-tree-type.enum';
+import {AdaBoostM1Options} from '../model/options/ada-boost-m1-options.model';
 
 const exec = require('child_process').exec;
 
@@ -139,9 +141,9 @@ export class WekaLibraryService {
 
         // call Weka
         const command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.ClassBalancer`
-            + ` -c last`
-            + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
-            + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
+                                + ` -c last`
+                                + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
+                                + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
         console.log(`Executing command ${command}`);
 
         await this.executeCommand(command);
@@ -152,12 +154,12 @@ export class WekaLibraryService {
         console.log('resampleDataset ' + inputFilePath);
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.Resample`
-            + ` -c last`
-            + ` -S ${resampleOptions.seed}`
-            + ` -Z ${resampleOptions.sizeOutputDataset}`
-            + ` -B ${resampleOptions.biasFactor}`
-            + ` -i \"${inputFilePath}\"`
-            + ` -o \"${outputFilePath}\"`;
+                              + ` -c last`
+                              + ` -S ${resampleOptions.seed}`
+                              + ` -Z ${resampleOptions.sizeOutputDataset}`
+                              + ` -B ${resampleOptions.biasFactor}`
+                              + ` -i \"${inputFilePath}\"`
+                              + ` -o \"${outputFilePath}\"`;
 
         if(resampleOptions.noReplacement) {
             command += +` -no-replacement`;
@@ -194,32 +196,96 @@ export class WekaLibraryService {
         }
     }
 
-    public async learnJ48(fileName: string, useBalancedArffFile?: boolean,
-                          generalOptions?: GeneralOptions,
-                          j48Options?: J48Options,
+    public async learnAdaBoostM1(fileName: string, useBalancedArffFile: boolean,
+                                 generalOptions: GeneralOptions,
+                                 adaBoostM1Options: AdaBoostM1Options,
+                                 baseClassifierType: DecisionTreeType.REP_TREE | DecisionTreeType.J48 | DecisionTreeType.RANDOM_TREE,
+                                 // TODO
+                                 baseClassifierOptions: J48Options,
+                                 enableLogging?: boolean,
+                                 includeWekaOutput?: boolean) {
+        includeWekaOutput = includeWekaOutput != null ? includeWekaOutput : false;
+
+        const trainingFilePath: string = useBalancedArffFile ? this.getBalancedTrainingFilePath(
+            fileName) : this.getUnbalancedTrainingFilePath(fileName);
+
+        let baseClassifierCommand: string = ``;
+
+        if(baseClassifierType == DecisionTreeType.J48) {
+            baseClassifierCommand = `weka.classifiers.trees.J48 -- -M ${baseClassifierOptions.M}`;
+
+            if(baseClassifierOptions.U) {
+                baseClassifierCommand += ` -U`;
+            } else {
+                // -C option only for pruned trees
+                baseClassifierCommand += ` -C ${baseClassifierOptions.C}`
+            }
+        } else {
+            throw new Error(`AdaBoostM1 not implemented for base classifier type ${baseClassifierType}`);
+        }
+
+        // call Weka
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.meta.AdaBoostM1`
+                              + ` -t \"${trainingFilePath}\"`;
+
+        if(adaBoostM1Options.I) {
+            command += ` -I ${adaBoostM1Options.I}`;
+        }
+
+        if(generalOptions.x != null) {
+            command += ` -x ${generalOptions.x}`;
+        }
+
+        // add the base classifier command at last
+        command += ` -W ${baseClassifierCommand}`
+
+        console.log(`Executing command ${command}`);
+
+        const output: string = await this.executeCommand(command);
+
+        if(enableLogging) {
+            console.log(output);
+        }
+
+        let classifierType: ClassifierType = null;
+
+        if(baseClassifierType == DecisionTreeType.J48) {
+            classifierType = ClassifierType.ADA_BOOST_M1_J48;
+        } else if(baseClassifierType == DecisionTreeType.REP_TREE) {
+            classifierType = ClassifierType.ADA_BOOST_M1_REP_TREE;
+        } else {
+            throw new Error(`AdaBoostM1 not implemented for base classifier type ${baseClassifierType}`);
+        }
+
+        const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(output, classifierType, includeWekaOutput);
+
+        await this.storeClassifierResults(output, result, fileName);
+
+        return result;
+    }
+
+    public async learnJ48(fileName: string, useBalancedArffFile: boolean,
+                          generalOptions: GeneralOptions,
+                          j48Options: J48Options,
                           enableLogging?: boolean,
                           includeWekaOutput?: boolean) {
 
         includeWekaOutput = includeWekaOutput != null ? includeWekaOutput : false;
-        useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
+
         const trainingFilePath: string = useBalancedArffFile ? this.getBalancedTrainingFilePath(
             fileName) : this.getUnbalancedTrainingFilePath(fileName);
 
-        if(generalOptions == null) {
-            generalOptions = new GeneralOptions();
-        }
-
-        if(j48Options == null) {
-            j48Options = new J48Options();
-        }
-
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.J48`
-            + ` -t \"${trainingFilePath}\"`
-            + ` -M ${j48Options.M}`;
+                              + ` -t \"${trainingFilePath}\"`
+                              + ` -M ${j48Options.M}`;
+
 
         if(j48Options.U) {
             command += ` -U`;
+        } else {
+            // -C option only for pruned trees
+            command += ` -C ${j48Options.C}`
         }
 
         if(generalOptions.x != null) {
@@ -244,11 +310,11 @@ export class WekaLibraryService {
     public async performCfsSubsetEval(options: CfsSubsetEvalOptions,
                                       generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.attributeSelection.CfsSubsetEval`
-            + ` -s \"${options.s}\"`
-            + ` -P ${options.P}`
-            + ` -E ${options.E}`
-            + ` -i \"${generalOptions.i}\"`
-            + ` -c last`;
+                              + ` -s \"${options.s}\"`
+                              + ` -P ${options.P}`
+                              + ` -E ${options.E}`
+                              + ` -i \"${generalOptions.i}\"`
+                              + ` -c last`;
 
         if(options.M) {
             command += +` -M`;
@@ -285,14 +351,13 @@ export class WekaLibraryService {
      * @param enableLogging - denotes whether the Weka output string should be printed on the console or not
      * @param includeWekaOutput - if {@link ClassifierContainer.wekaOutput} should be included in the result
      */
-    public async learnRandomForest(fileName: string, useBalancedArffFile?: boolean,
+    public async learnRandomForest(fileName: string, useBalancedArffFile: boolean,
                                    options?: GlobalWekaOptions,
                                    randomForestOptions?: RandomForestOptions,
                                    generalOptions?: GeneralOptions,
                                    enableLogging?: boolean,
                                    includeWekaOutput?: boolean): Promise<ClassifierContainer> {
         includeWekaOutput = includeWekaOutput != null ? includeWekaOutput : false;
-        useBalancedArffFile = useBalancedArffFile != null ? useBalancedArffFile : false;
 
         const trainingFilePath: string = useBalancedArffFile ? this.getBalancedTrainingFilePath(
             fileName) : this.getUnbalancedTrainingFilePath(fileName);
@@ -311,13 +376,13 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`
-            + ` -t \"${trainingFilePath}\"`
-            + ` -num-slots ${options.numSlots}`
-            + ` -I ${randomForestOptions.numberOfIterations}`
-            + ` -M ${randomForestOptions.minNumberOfInstances}`
-            + ` -depth ${randomForestOptions.depth}`
-            + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
-            + ` -print -attribute-importance`;
+                              + ` -t \"${trainingFilePath}\"`
+                              + ` -num-slots ${options.numSlots}`
+                              + ` -I ${randomForestOptions.numberOfIterations}`
+                              + ` -M ${randomForestOptions.minNumberOfInstances}`
+                              + ` -depth ${randomForestOptions.depth}`
+                              + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
+                              + ` -print -attribute-importance`;
 
         if(generalOptions.x != null) {
             command += ` -x ${generalOptions.x}`;
@@ -343,7 +408,9 @@ export class WekaLibraryService {
         !fs.existsSync(`${this.outputDirectory}/full/`) &&
         fs.mkdirSync(`${this.outputDirectory}/full/`, {recursive: true});
 
-        const prefix: string = result.type == ClassifierType.RANDOM_FOREST ? `RandomForest` : result.type == ClassifierType.J48 ? `J48` : ``;
+        const prefix: string = result.type == ClassifierType.RANDOM_FOREST ?
+            `RandomForest` :
+            result.type == ClassifierType.J48 ? `J48` : ``;
 
         // store the final results in files
         fs.writeFileSync(`${this.outputDirectory}/full/${prefix}_${this.getFileNameWithoutSuffix(fileName)}.txt`, output);

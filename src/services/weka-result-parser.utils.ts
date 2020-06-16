@@ -49,21 +49,15 @@ export class WekaResultParserUtils {
         let relevantSubString: string;
 
         // OPTIONS
-        if(classifierType == ClassifierType.RANDOM_FOREST || classifierType == ClassifierType.J48) {
-            startIdentifier = 'Options: ';
-            endIdentifier = ' \n\n===';
-            startIndex = resultString.search(startIdentifier) + startIdentifier.length;
-            endIndex = resultString.search(endIdentifier);
-            result.options = resultString.substring(startIndex, endIndex);
-            resultString = resultString.slice(endIndex);
-        }
+        startIdentifier = 'Options: ';
+        endIdentifier = ' \n\n===';
+        startIndex = resultString.search(startIdentifier) + startIdentifier.length;
+        endIndex = resultString.search(endIdentifier);
+        result.options = resultString.substring(startIndex, endIndex);
+        resultString = resultString.slice(endIndex);
 
         // ADA BOOST SCHEME
         let adaBoostM1J48Scheme: string;
-        if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
-            const schemeRegex = /(?:Scheme:\s*)(.*)/m;
-            adaBoostM1J48Scheme = schemeRegex.exec(resultString)[1];
-        }
 
         // CLASSIFIER MODEL FOR FULL TRAINING SET
         if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
@@ -84,7 +78,7 @@ export class WekaResultParserUtils {
             // TODO
             result.classifierModelFullTrainingSet = WekaResultParserUtils.parseJ48(relevantSubString);
         } else if(classifierType == ClassifierType.ADA_BOOST_M1_J48) {
-            result.classifierModelFullTrainingSet = WekaResultParserUtils.parseAdaBoostM1J48(relevantSubString, adaBoostM1J48Scheme);
+            result.classifierModelFullTrainingSet = WekaResultParserUtils.parseAdaBoostM1J48(relevantSubString);
         } else if(classifierType == ClassifierType.ADA_BOOST_M1_REP_TREE) {
             // TODO
         }
@@ -698,12 +692,14 @@ export class WekaResultParserUtils {
         });
     }
 
-    private static parseAdaBoostM1J48(adaBoostM1J48String: string, adaBoostM1J48Scheme: string): AdaBoostM1 {
+    private static parseAdaBoostM1J48(adaBoostM1J48String: string): AdaBoostM1 {
         let startIdentifier: string = '\nJ48';
         let endIdentifierRegex;
 
         const adaBoostM1: AdaBoostM1 = new AdaBoostM1();
-        adaBoostM1.classifierModelDescription = adaBoostM1J48Scheme;
+
+        // TODO
+        adaBoostM1.classifierModelDescription = '';
 
         while(adaBoostM1J48String.includes('J48')) {
             endIdentifierRegex = /(Weight:\s*.*)/gm;

@@ -1,22 +1,5 @@
-export const testAdaBoostM1REPTree: string = `=== Run information ===
-
-Scheme:       weka.classifiers.meta.AdaBoostM1 -P 100 -S 1 -I 10 -W weka.classifiers.trees.REPTree -- -M 2 -V 0.001 -N 3 -S 1 -L -1 -I 0.0
-Relation:     MetatrueLabelData-weka.filters.supervised.instance.Resample-B1.0-S1-Z100.0-weka.filters.unsupervised.attribute.Remove-R11
-Instances:    25151
-Attributes:   12
-              feature1
-              feature2
-              feature3
-              feature4
-              feature5
-              feature6
-              feature7
-              feature8
-              feature9
-              feature10
-              feature11
-              trueLabel
-Test mode:    10-fold cross-validation
+export const testAdaBoostM1REPTree: string = `
+Options: weka.classifiers.meta.AdaBoostM1 -P 100 -S 1 -I 10 -W weka.classifiers.trees.REPTree -- -M 2 -V 0.001 -N 3 -S 1 -L -1 -I 0.0
 
 === Classifier model (full training set) ===
 
