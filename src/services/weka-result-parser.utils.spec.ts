@@ -28,11 +28,16 @@ import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model'
 describe('WekaResultParserUtils', () => {
 
     test('should parse Random Forest result', () => {
+        const initialStringLength: number = testResultStringRandomForest.length;
         const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest,
-            ClassifierType.RANDOM_FOREST, false);
+            ClassifierType.RANDOM_FOREST, true);
+
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
         expect(result.timeTakenToPerformCrossValidation).toEqual(0.6);
+        expect(result.wekaOutput.length).toEqual(initialStringLength);
+        // parsing should not change the initial string
+        expect(testResultStringRandomForest.length).toEqual(initialStringLength);
     });
 
     test('should parse AdaBoostM1 REP-Tree result', () => {
