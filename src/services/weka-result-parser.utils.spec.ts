@@ -17,13 +17,13 @@ import {AttributeImportance} from '../model/evaluation/attribute-importance.mode
 import {ConfusionMatrix} from '../model/evaluation/confusion-matrix.model';
 import {ClassifierType} from '../enum/classifier-type.enum';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
-import {testAdaBoostM1REPTree} from './test-data/test-AdaBoostM1-REP-Tree';
 import {testAdaBoostM1J48} from './test-data/test-AdaBoostM1-J48';
 import {AdaBoostM1} from '../model/classifiers/ada-boost-m1.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
+import exp from 'constants';
 
 describe('WekaResultParserUtils', () => {
 
@@ -31,6 +31,8 @@ describe('WekaResultParserUtils', () => {
         const initialStringLength: number = testResultStringRandomForest.length;
         const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest,
             ClassifierType.RANDOM_FOREST, true);
+
+        expect(result.classifierModelFullTrainingSet.totalModel[0].parsedClassifier.weight).toEqual(1);
         expect(result.options).toEqual('-num-slots 0 -I 3 -M 20 -depth 0 -print -attribute-importance');
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
@@ -50,6 +52,8 @@ describe('WekaResultParserUtils', () => {
     test('should parse AdaBoostM1 J48 result', () => {
         const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testAdaBoostM1J48, ClassifierType.ADA_BOOST_M1_J48,
             false);
+
+        expect(result.classifierModelFullTrainingSet.totalModel[0].parsedClassifier.weight).toEqual(4);
 
         expect(result.timeTakenToBuildModel).toBe(5.43);
         expect(result.timeTakenToTestModelOnTrainingData).toBeUndefined();

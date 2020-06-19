@@ -648,47 +648,7 @@ export class WekaResultParserUtils {
 
     private static parseJ48(resultString: string): J48 {
         return new J48({
-            totalModel: this.parseJ48DecisionTree(resultString)
-        });
-    }
-
-    private static parseJ48DecisionTree(resultString: string): DecisionTreeContainer {
-        // number of leaves
-        let regExp = /Number of Leaves\s\s:\s*(\d*)/gm;
-        let regExpResult = regExp.exec(resultString);
-        const numberOfLeaves: number = Number.parseInt(regExpResult[1]);
-
-        // tree size
-        regExp = /(?:Size of the tree :)\s*(.+)/gm;
-        // the regExp matches the following string (w/o quotes), for example: '0.39 (    11)  trajectorySimilarityTram'
-        regExpResult = regExp.exec(resultString);
-        const treeSize: number = Number.parseInt(regExpResult[1]);
-
-        // weight
-        regExp = /(?:Weight:\s*)(.*)/gm;
-        regExpResult = regExp.exec(resultString);
-        let weight: number = 1;
-
-        if(regExpResult != null) {
-            weight = Number.parseFloat(regExpResult[1]);
-        }
-
-        // Model
-        const startIdentifier: string = '\n------------------\n\n';
-        const endIdentifier: string = '\n\nNumber of Leaves';
-        const startIndex: number = resultString.search(startIdentifier) + startIdentifier.length;
-        const endIndex: number = resultString.search(endIdentifier);
-        const model: string = resultString.substring(startIndex, endIndex);
-
-        const parsedClassifier: DecisionTree = WekaTreeParserUtils.parse(model, DecisionTreeType.J48);
-        parsedClassifier.weight = weight;
-
-        return new DecisionTreeContainer({
-            classifier: model,
-            parsedClassifier: parsedClassifier,
-            numberOfLeaves: numberOfLeaves,
-            sizeOfTree: treeSize,
-            type: DecisionTreeType.J48
+            totalModel: WekaTreeParserUtils.parseJ48DecisionTree(resultString)
         });
     }
 
@@ -709,7 +669,7 @@ export class WekaResultParserUtils {
             const adaBoostString: string = adaBoostM1J48String.slice(startIndex, endIndex);
             adaBoostM1J48String = adaBoostM1J48String.substr(endIndex + 1);
 
-            const j48DecisionTree: DecisionTreeContainer = this.parseJ48DecisionTree(adaBoostString);
+            const j48DecisionTree: DecisionTreeContainer = WekaTreeParserUtils.parseJ48DecisionTree(adaBoostString);
             adaBoostM1.totalModel.push(j48DecisionTree);
         }
 

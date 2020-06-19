@@ -16,6 +16,7 @@ describe('WekaClassificationUtils', () => {
 
             const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
             expect(result.class).toEqual('classT');
+            expect(result.weight).not.toBeUndefined();
         });
 
         test('should classify an instance as classB', () => {
@@ -26,6 +27,7 @@ describe('WekaClassificationUtils', () => {
 
             const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
             expect(result.class).toEqual('classB');
+            expect(result.weight).not.toBeUndefined();
         });
 
         test('should classify an instance as classS', () => {
@@ -36,6 +38,7 @@ describe('WekaClassificationUtils', () => {
 
             const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
             expect(result.class).toEqual('classS');
+            expect(result.weight).not.toBeUndefined();
         });
 
         test('should classify an instance as classC from a Random Tree', () => {
@@ -47,6 +50,7 @@ describe('WekaClassificationUtils', () => {
 
             const result: Vote = WekaClassificationUtils.classify(features, decisionTree);
             expect(result.class).toEqual('classC');
+            expect(result.weight).not.toBeUndefined();
         });
 
 

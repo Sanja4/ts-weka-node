@@ -24,6 +24,8 @@ describe('WekaTreeParserUtils', () => {
 
         test('should parse a Random tree (1)', () => {
             const result: DecisionTree = WekaTreeParserUtils.parse(binaryTreeString1, DecisionTreeType.RANDOM_TREE);
+
+            expect(result.weight).toEqual(1);
             expect(result.splitValue).toEqual(0.86);
             expect(result.splitAttribute).toEqual('featureB');
             const leftChild: DecisionTree = result.children[0] as DecisionTree;

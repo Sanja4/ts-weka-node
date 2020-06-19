@@ -5,6 +5,7 @@
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
+import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 
 /**
  * Helper class to parse a decision tree from Weka with numerical attributes.
@@ -22,7 +23,25 @@ export class WekaTreeParserUtils {
         // split by lines
         const splitTreeString: string[] = treeString.split('\n');
 
-        return this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
+        const decisionTree: DecisionTree = this.parseNode(splitTreeString, decisionTreeType) as DecisionTree;
+
+        // set the default weight (if the weight should be different, it needs to be overwritten later)
+        decisionTree.weight = 1;
+
+        return decisionTree;
+    }
+
+    public static parseWeight(treeString: string): number {
+        // weight
+        let regExp = /(?:Weight:\s*)(.*)/gm;
+        let regExpResult = regExp.exec(treeString);
+        let weight: number = 1;
+
+        if(regExpResult != null) {
+            weight = Number.parseFloat(regExpResult[1]);
+        }
+
+        return weight;
     }
 
     /**
@@ -68,6 +87,39 @@ export class WekaTreeParserUtils {
         };
     }
 
+    public static parseJ48DecisionTree(resultString: string): DecisionTreeContainer {
+        // number of leaves
+        let regExp = /Number of Leaves\s\s:\s*(\d*)/gm;
+        let regExpResult = regExp.exec(resultString);
+        const numberOfLeaves: number = Number.parseInt(regExpResult[1]);
+
+        // tree size
+        regExp = /(?:Size of the tree :)\s*(.+)/gm;
+        // the regExp matches the following string (w/o quotes), for example: '0.39 (    11)  trajectorySimilarityTram'
+        regExpResult = regExp.exec(resultString);
+        const treeSize: number = Number.parseInt(regExpResult[1]);
+        // weight
+        const weight: number = this.parseWeight(resultString);
+
+        // Model
+        const startIdentifier: string = '\n------------------\n\n';
+        const endIdentifier: string = '\n\nNumber of Leaves';
+        const startIndex: number = resultString.search(startIdentifier) + startIdentifier.length;
+        const endIndex: number = resultString.search(endIdentifier);
+        const model: string = resultString.substring(startIndex, endIndex);
+
+        const parsedClassifier: DecisionTree = WekaTreeParserUtils.parse(model, DecisionTreeType.J48);
+        parsedClassifier.weight = weight;
+
+        return new DecisionTreeContainer({
+            classifier: model,
+            parsedClassifier: parsedClassifier,
+            numberOfLeaves: numberOfLeaves,
+            sizeOfTree: treeSize,
+            type: DecisionTreeType.J48
+        });
+    }
+
     /**
      * Parses a node consisting of multiple lines. A node can be a decision tree or a leaf.
      * @param splitTreeString - the decision tree or leaf of the nodes line by line
@@ -75,7 +127,8 @@ export class WekaTreeParserUtils {
      * @returns the decision tree or leaf of the node
      */
     // TODO enable parsing of Random Trees and REP-Trees
-    private static parseNode(splitTreeString: string[], decisionTreeType: DecisionTreeType): DecisionTree | DecisionTreeLeaf {
+    private static parseNode(splitTreeString: string[],
+                             decisionTreeType: DecisionTreeType): DecisionTree | DecisionTreeLeaf {
         let firstLine: string = splitTreeString[0];
 
         if(splitTreeString.length == 1) {
