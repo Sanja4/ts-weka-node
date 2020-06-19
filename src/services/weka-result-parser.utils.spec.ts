@@ -31,7 +31,7 @@ describe('WekaResultParserUtils', () => {
         const initialStringLength: number = testResultStringRandomForest.length;
         const result: ClassifierContainer = WekaResultParserUtils.parseClassifier(testResultStringRandomForest,
             ClassifierType.RANDOM_FOREST, true);
-
+        expect(result.options).toEqual('-num-slots 0 -I 3 -M 20 -depth 0 -print -attribute-importance');
         expect(result.timeTakenToBuildModel).toEqual(0.56);
         expect(result.timeTakenToTestModelOnTrainingData).toEqual(0.16);
         expect(result.timeTakenToPerformCrossValidation).toEqual(0.6);

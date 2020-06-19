@@ -144,7 +144,6 @@ export class WekaLibraryService {
                                 + ` -c last`
                                 + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
                                 + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
-        console.log(`Executing command ${command}`);
 
         await this.executeCommand(command);
     }
@@ -239,8 +238,6 @@ export class WekaLibraryService {
         // add the base classifier command at last
         command += ` -W ${baseClassifierCommand}`
 
-        console.log(`Executing command ${command}`);
-
         const output: string = await this.executeCommand(command);
 
         if(enableLogging) {
@@ -291,8 +288,6 @@ export class WekaLibraryService {
         if(generalOptions.x != null) {
             command += ` -x ${generalOptions.x}`;
         }
-
-        console.log(`Executing command ${command}`);
 
         const output: string = await this.executeCommand(command);
 
@@ -387,8 +382,6 @@ export class WekaLibraryService {
         if(generalOptions.x != null) {
             command += ` -x ${generalOptions.x}`;
         }
-
-        console.log(`Executing command ${command}`);
 
         const output: string = await this.executeCommand(command);
 
