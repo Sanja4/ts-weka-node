@@ -225,7 +225,9 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.meta.AdaBoostM1`
-                              + ` -t \"${trainingFilePath}\"`;
+                              + ` -t \"${trainingFilePath}\"`
+                              + ` -num-decimal-places ${adaBoostM1Options.numDecimalPlaces}`;
+
 
         if(adaBoostM1Options.I) {
             command += ` -I ${adaBoostM1Options.I}`;

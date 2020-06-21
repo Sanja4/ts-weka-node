@@ -31,6 +31,15 @@ describe('WekaLibraryService', () => {
         // TODO
     });
 
+    test('should learn an AdaBoostM1 J48 with custom options', async() => {
+        const result: ClassifierContainer = await serviceUnderTest.learnAdaBoostM1('test_dataset', false,
+            new GeneralOptions(),
+            new AdaBoostM1Options({numDecimalPlaces: 10, I: 5}),
+            DecisionTreeType.J48,
+            new J48Options());
+        // TODO
+    });
+
     test('should learn a J48 ', async() => {
         const j48Options: J48Options = new J48Options({
             U: true,
