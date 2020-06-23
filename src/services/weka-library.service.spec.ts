@@ -5,7 +5,7 @@ import {BestFirstOptions} from '../model/options/best-first-options.model';
 import {CfsSubsetEvalOptions} from '../model/options/cfs-subset-eval-options.model';
 import {EvaluatorType} from '../enum/evaluator-type.enum';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
-import {J48Options} from '../model/options/J48-options.model';
+import {J48Options} from '../model/options/j48-options.model';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';

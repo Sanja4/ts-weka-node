@@ -13,12 +13,12 @@ import {EvaluationResult} from '../model/evaluation/evaluation-result.model';
 import {AttributeImportance} from '../model/evaluation/attribute-importance.model';
 import {AttributeSelectionResult} from '../model/attribute-selection/attribute-selection-result.model';
 import {EvaluatorType} from '../enum/evaluator-type.enum';
-import {J48Options} from '../model/options/J48-options.model';
+import {J48Options} from '../model/options/j48-options.model';
 import {ClassifierType} from '../enum/classifier-type.enum';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {RandomForest} from '../model/classifiers/random-forest.model';
-import {J48} from '../model/classifiers/J48.model';
+import {J48} from '../model/classifiers/j48.model';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 import {AdaBoostM1Options} from '../model/options/ada-boost-m1-options.model';
 
@@ -175,6 +175,10 @@ export class WekaLibraryService {
         let searchMethodCommand: string = ``;
 
         if(searchMethod == SearchMethod.BEST_FIRST) {
+            if(searchMethodOptions == null) {
+                searchMethodOptions = new BestFirstOptions();
+            }
+
             searchMethodCommand +=
                 `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
         } else if(searchMethod == SearchMethod.EVOLUTIONARY_SEARCH) {

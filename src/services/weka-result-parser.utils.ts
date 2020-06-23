@@ -16,7 +16,7 @@ import {CrossValidationResult} from '../model/attribute-selection/cross-validati
 import {CrossValidationResultDetail} from '../model/attribute-selection/cross-validation-result-detail.model';
 import {ClassifierType} from '../enum/classifier-type.enum';
 import {ClassifierContainer} from '../model/classifiers/classifier-container.model';
-import {J48} from '../model/classifiers/J48.model';
+import {J48} from '../model/classifiers/j48.model';
 import {DecisionTreeContainer} from '../model/classifiers/decision-tree-container.model';
 import {WekaTreeParserUtils} from '../utils/weka-tree-parser.utils';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';

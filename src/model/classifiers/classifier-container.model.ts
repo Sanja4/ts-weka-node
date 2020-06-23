@@ -1,7 +1,7 @@
 import {RandomForest} from './random-forest.model';
 import {EvaluationResult} from '../evaluation/evaluation-result.model';
 import {ClassifierType} from '../../enum/classifier-type.enum';
-import {J48} from './J48.model';
+import {J48} from './j48.model';
 import {AdaBoostM1} from './ada-boost-m1.model';
 
 export class ClassifierContainer {

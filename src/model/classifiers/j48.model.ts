@@ -8,5 +8,4 @@ export class J48 {
     constructor(params?: J48) {
         Object.assign(this, params);
     }
-
 }
