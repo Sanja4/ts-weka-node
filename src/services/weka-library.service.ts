@@ -141,9 +141,9 @@ export class WekaLibraryService {
 
         // call Weka
         const command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.ClassBalancer`
-                                + ` -c last`
-                                + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
-                                + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
+            + ` -c last`
+            + ` -i \"${this.getUnbalancedTrainingFilePath(fileName)}\"`
+            + ` -o \"${this.getBalancedTrainingFilePath(fileName)}\"`;
 
         await this.executeCommand(command);
     }
@@ -153,12 +153,12 @@ export class WekaLibraryService {
         console.log('resampleDataset ' + inputFilePath);
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.instance.Resample`
-                              + ` -c last`
-                              + ` -S ${resampleOptions.seed}`
-                              + ` -Z ${resampleOptions.sizeOutputDataset}`
-                              + ` -B ${resampleOptions.biasFactor}`
-                              + ` -i \"${inputFilePath}\"`
-                              + ` -o \"${outputFilePath}\"`;
+            + ` -c last`
+            + ` -S ${resampleOptions.seed}`
+            + ` -Z ${resampleOptions.sizeOutputDataset}`
+            + ` -B ${resampleOptions.biasFactor}`
+            + ` -i \"${inputFilePath}\"`
+            + ` -o \"${outputFilePath}\"`;
 
         if(resampleOptions.noReplacement) {
             command += +` -no-replacement`;
@@ -199,6 +199,35 @@ export class WekaLibraryService {
         }
     }
 
+    public async performAttributeSelectionFilter(evaluator: EvaluatorType,
+                                                 evaluatorOptions: CfsSubsetEvalOptions | any,
+                                                 generalOptions: GeneralOptions,
+                                                 searchMethod: SearchMethod,
+                                                 searchMethodOptions: BestFirstOptions | any,
+                                                 outputFilePath: string) {
+        let searchMethodCommand: string = ``;
+
+        if(searchMethod == SearchMethod.BEST_FIRST) {
+            searchMethodCommand +=
+                `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
+        } else if(searchMethod == SearchMethod.EVOLUTIONARY_SEARCH) {
+            searchMethodCommand +=
+                `weka.attributeSelection.EvolutionarySearch -population-size 20 -generations 20 -init-op 0 -selection-op 1 -crossover-op 0 -crossover-probability 0.6 -mutation-op 0 -mutation-probability 0.1 -replacement-op 0 -seed 1 -report-frequency 20`;
+        } else if(searchMethod == SearchMethod.GENETIC_SEARCH) {
+            searchMethodCommand += `weka.attributeSelection.GeneticSearch -Z 20 -G 20 -C 0.6 -M 0.033 -R 20 -S 1`;
+        } else {
+            throw new Error(`Found no search method for ${searchMethod}`);
+        }
+
+        evaluatorOptions.s = searchMethodCommand;
+
+        if(evaluator == EvaluatorType.CFS_SUBSET_EVAL) {
+            await this.performCfsSubsetEvalFilter(evaluatorOptions, generalOptions, outputFilePath);
+        } else {
+            throw new Error(`Found no evaluator method for ${evaluator}`);
+        }
+    }
+
     public async learnAdaBoostM1(fileName: string, useBalancedArffFile: boolean,
                                  generalOptions: GeneralOptions,
                                  adaBoostM1Options: AdaBoostM1Options,
@@ -221,7 +250,7 @@ export class WekaLibraryService {
                 baseClassifierCommand += ` -U`;
             } else {
                 // -C option only for pruned trees
-                baseClassifierCommand += ` -C ${baseClassifierOptions.C}`
+                baseClassifierCommand += ` -C ${baseClassifierOptions.C}`;
             }
         } else {
             throw new Error(`AdaBoostM1 not implemented for base classifier type ${baseClassifierType}`);
@@ -229,9 +258,8 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.meta.AdaBoostM1`
-                              + ` -t \"${trainingFilePath}\"`
-                              + ` -num-decimal-places ${adaBoostM1Options.numDecimalPlaces}`;
-
+            + ` -t \"${trainingFilePath}\"`
+            + ` -num-decimal-places ${adaBoostM1Options.numDecimalPlaces}`;
 
         if(adaBoostM1Options.I) {
             command += ` -I ${adaBoostM1Options.I}`;
@@ -242,7 +270,7 @@ export class WekaLibraryService {
         }
 
         // add the base classifier command at last
-        command += ` -W ${baseClassifierCommand}`
+        command += ` -W ${baseClassifierCommand}`;
 
         const output: string = await this.executeCommand(command);
 
@@ -280,15 +308,15 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.J48`
-                              + ` -t \"${trainingFilePath}\"`
-                              + ` -M ${j48Options.M}`;
+            + ` -t \"${trainingFilePath}\"`
+            + ` -M ${j48Options.M}`;
 
 
         if(j48Options.U) {
             command += ` -U`;
         } else {
             // -C option only for pruned trees
-            command += ` -C ${j48Options.C}`
+            command += ` -C ${j48Options.C}`;
         }
 
         if(generalOptions.x != null) {
@@ -308,14 +336,49 @@ export class WekaLibraryService {
         return result;
     }
 
+    private async performCfsSubsetEvalFilter(options: CfsSubsetEvalOptions,
+                                             generalOptions: GeneralOptions,
+                                             outputFilePath: string): Promise<void> {
+        let cfsSubsetEvalCommand: string = `\"weka.attributeSelection.CfsSubsetEval`
+            + ` -P ${options.P}`
+            + ` -E ${options.E}\"`
+            + ` -S \"${options.s}\"`;
+
+        if(options.M) {
+            cfsSubsetEvalCommand += +` -M`;
+        }
+
+        if(options.L) {
+            cfsSubsetEvalCommand += +` -L`;
+        }
+
+        if(options.Z) {
+            cfsSubsetEvalCommand += +` -Z`;
+        }
+
+        if(options.D) {
+            cfsSubsetEvalCommand += +` -D`;
+        }
+
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.attribute.AttributeSelection -E ${cfsSubsetEvalCommand}`
+            + ` -i \"${generalOptions.i}\"`
+            + ` -o \"${outputFilePath}\"`;
+
+        if(generalOptions.x) {
+            command += ` -x ${generalOptions.x}`;
+        }
+
+        await this.executeCommand(command);
+    }
+
     public async performCfsSubsetEval(options: CfsSubsetEvalOptions,
                                       generalOptions: GeneralOptions): Promise<AttributeSelectionResult> {
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.attributeSelection.CfsSubsetEval`
-                              + ` -s \"${options.s}\"`
-                              + ` -P ${options.P}`
-                              + ` -E ${options.E}`
-                              + ` -i \"${generalOptions.i}\"`
-                              + ` -c last`;
+            + ` -s \"${options.s}\"`
+            + ` -P ${options.P}`
+            + ` -E ${options.E}`
+            + ` -i \"${generalOptions.i}\"`
+            + ` -c last`;
 
         if(options.M) {
             command += +` -M`;
@@ -377,13 +440,13 @@ export class WekaLibraryService {
 
         // call Weka
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.classifiers.trees.RandomForest`
-                              + ` -t \"${trainingFilePath}\"`
-                              + ` -num-slots ${options.numSlots}`
-                              + ` -I ${randomForestOptions.numberOfIterations}`
-                              + ` -M ${randomForestOptions.minNumberOfInstances}`
-                              + ` -depth ${randomForestOptions.depth}`
-                              + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
-                              + ` -print -attribute-importance`;
+            + ` -t \"${trainingFilePath}\"`
+            + ` -num-slots ${options.numSlots}`
+            + ` -I ${randomForestOptions.numberOfIterations}`
+            + ` -M ${randomForestOptions.minNumberOfInstances}`
+            + ` -depth ${randomForestOptions.depth}`
+            + ` -num-decimal-places ${randomForestOptions.numDecimalPlaces}`
+            + ` -print -attribute-importance`;
 
         if(generalOptions.x != null) {
             command += ` -x ${generalOptions.x}`;
