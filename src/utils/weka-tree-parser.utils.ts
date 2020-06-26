@@ -52,17 +52,19 @@ export class WekaTreeParserUtils {
     public static parseLeaf(leafString: string): DecisionTreeLeaf {
         let relevantSubstring: string;
         let startIndex: number;
-        let identifier: string = ' : ';
+        let identifier = /:\s*/gm;
 
-        if(leafString.indexOf(identifier) == -1) {
+        const result = identifier.exec(leafString);
+
+        if(result == null) {
             startIndex = 0;
         } else {
-            startIndex = leafString.indexOf(identifier) + identifier.length;
+            startIndex = leafString.indexOf(result[0]) + result[0].length;
         }
 
         relevantSubstring = leafString.substring(startIndex);
 
-        const predictedClassRegExp = /(?::*\s*)(\S*)(?:\s*\()/gm;
+        const predictedClassRegExp = /(?::*\s*)(.*(?=\s))(?:\s*\()/gm;
         let regExpResult = predictedClassRegExp.exec(relevantSubstring);
         const predictedClass: string = regExpResult[1];
 
