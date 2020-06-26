@@ -208,6 +208,10 @@ export class WekaLibraryService {
         let searchMethodCommand: string = ``;
 
         if(searchMethod == SearchMethod.BEST_FIRST) {
+            if(searchMethodOptions == null) {
+                searchMethodOptions = new BestFirstOptions();
+            }
+
             searchMethodCommand +=
                 `weka.attributeSelection.BestFirst -D ${searchMethodOptions.D} -N ${searchMethodOptions.N} -S ${searchMethodOptions.S}`;
         } else if(searchMethod == SearchMethod.EVOLUTIONARY_SEARCH) {
