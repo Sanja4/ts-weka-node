@@ -21,6 +21,8 @@ import {RandomForest} from '../model/classifiers/random-forest.model';
 import {J48} from '../model/classifiers/j48.model';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 import {AdaBoostM1Options} from '../model/options/ada-boost-m1-options.model';
+import {InfoGainAttributeEvalOptions} from '../model/options/info-gain-attribute-eval-options.model';
+import {InfoGainAttributeRanking} from '../model/attribute-selection/info-gain-attribute-ranking.model';
 
 const exec = require('child_process').exec;
 
@@ -161,14 +163,22 @@ export class WekaLibraryService {
             + ` -o \"${outputFilePath}\"`;
 
         if(resampleOptions.noReplacement) {
-            command += +` -no-replacement`;
+            command += ` -no-replacement`;
         }
 
         await this.executeCommand(command);
     }
 
+    /**
+     *
+     * @param evaluator
+     * @param evaluatorOptions
+     * @param generalOptions - always the 'i' parameter is needed. It states the input path to the arff file
+     * @param searchMethod
+     * @param searchMethodOptions
+     */
     public async performAttributeSelection(evaluator: EvaluatorType,
-                                           evaluatorOptions: CfsSubsetEvalOptions | any,
+                                           evaluatorOptions: CfsSubsetEvalOptions | InfoGainAttributeEvalOptions | any,
                                            generalOptions: GeneralOptions,
                                            searchMethod: SearchMethod,
                                            searchMethodOptions: BestFirstOptions | any) {
@@ -186,6 +196,8 @@ export class WekaLibraryService {
                 `weka.attributeSelection.EvolutionarySearch -population-size 20 -generations 20 -init-op 0 -selection-op 1 -crossover-op 0 -crossover-probability 0.6 -mutation-op 0 -mutation-probability 0.1 -replacement-op 0 -seed 1 -report-frequency 20`;
         } else if(searchMethod == SearchMethod.GENETIC_SEARCH) {
             searchMethodCommand += `weka.attributeSelection.GeneticSearch -Z 20 -G 20 -C 0.6 -M 0.033 -R 20 -S 1`;
+        } else if(searchMethod == SearchMethod.RANKER) {
+            searchMethodCommand += `weka.attributeSelection.Ranker -T -1.7976931348623157E308 -N -1`;
         } else {
             throw new Error(`Found no search method for ${searchMethod}`);
         }
@@ -194,6 +206,8 @@ export class WekaLibraryService {
 
         if(evaluator == EvaluatorType.CFS_SUBSET_EVAL) {
             return await this.performCfsSubsetEval(evaluatorOptions, generalOptions);
+        } else if(evaluator == EvaluatorType.INFO_GAIN_ATTRIBUTE_EVAL) {
+            return await this.performInfoGainAttributeEval(evaluatorOptions, generalOptions.i);
         } else {
             throw new Error(`Found no evaluator method for ${evaluator}`);
         }
@@ -349,19 +363,19 @@ export class WekaLibraryService {
             + ` -S \"${options.s}\"`;
 
         if(options.M) {
-            cfsSubsetEvalCommand += +` -M`;
+            cfsSubsetEvalCommand += ` -M`;
         }
 
         if(options.L) {
-            cfsSubsetEvalCommand += +` -L`;
+            cfsSubsetEvalCommand += ` -L`;
         }
 
         if(options.Z) {
-            cfsSubsetEvalCommand += +` -Z`;
+            cfsSubsetEvalCommand += ` -Z`;
         }
 
         if(options.D) {
-            cfsSubsetEvalCommand += +` -D`;
+            cfsSubsetEvalCommand += ` -D`;
         }
 
         let command: string = `java -classpath \"${this.getClassPath()}\" weka.filters.supervised.attribute.AttributeSelection -E ${cfsSubsetEvalCommand}`
@@ -385,19 +399,19 @@ export class WekaLibraryService {
             + ` -c last`;
 
         if(options.M) {
-            command += +` -M`;
+            command += ` -M`;
         }
 
         if(options.L) {
-            command += +` -L`;
+            command += ` -L`;
         }
 
         if(options.Z) {
-            command += +` -Z`;
+            command += ` -Z`;
         }
 
         if(options.D) {
-            command += +` -D`;
+            command += ` -D`;
         }
 
         if(generalOptions.x) {
@@ -407,6 +421,18 @@ export class WekaLibraryService {
         const output: string = await this.executeCommand(command);
 
         return WekaResultParserUtils.extractAttributeSelectionResult(output, generalOptions.x != null);
+    }
+
+    private async performInfoGainAttributeEval(evaluatorOptions: InfoGainAttributeEvalOptions,
+                                               arffInputFilePath: string): Promise<InfoGainAttributeRanking[]> {
+        let command: string = `java -classpath \"${this.getClassPath()}\" weka.attributeSelection.InfoGainAttributeEval`
+            + ` -i \"${arffInputFilePath}\"`
+            + ` -s \"${evaluatorOptions.s}\"`
+            + ` -c last`;
+
+        const output: string = await this.executeCommand(command);
+
+        return WekaResultParserUtils.extractInfoGainAttributeSelectionResult(output);
     }
 
     /**

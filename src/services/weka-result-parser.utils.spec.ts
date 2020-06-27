@@ -23,7 +23,8 @@ import {DecisionTreeContainer} from '../model/classifiers/decision-tree-containe
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
-import exp from 'constants';
+import {testInfoGainAttributeSelectionResult} from './test-data/testInfoGainAttributeSelectionResult';
+import {InfoGainAttributeRanking} from '../model/attribute-selection/info-gain-attribute-ranking.model';
 
 describe('WekaResultParserUtils', () => {
 
@@ -501,6 +502,19 @@ describe('WekaResultParserUtils', () => {
             }
         ];
         expect(result.matrixElements[6].classifiedAs).toEqual(expected6);
+    });
+
+    test('should extract info gain attributes with ranking value', () => {
+        const result: InfoGainAttributeRanking[] =
+            WekaResultParserUtils.extractInfoGainAttributeSelectionResult(testInfoGainAttributeSelectionResult);
+
+        expect(result.length).toEqual(21);
+        expect(result[0].attributeName).toEqual('featureE');
+        expect(result[0].rankingValue).toEqual(1.537);
+        expect(result[9].attributeName).toEqual('featureR');
+        expect(result[9].rankingValue).toEqual(1.304);
+        expect(result[20].attributeName).toEqual('test feature with space');
+        expect(result[20].rankingValue).toEqual(1.18);
     });
 
 });

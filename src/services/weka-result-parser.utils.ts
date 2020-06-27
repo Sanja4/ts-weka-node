@@ -21,7 +21,7 @@ import {DecisionTreeContainer} from '../model/classifiers/decision-tree-containe
 import {WekaTreeParserUtils} from '../utils/weka-tree-parser.utils';
 import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 import {AdaBoostM1} from '../model/classifiers/ada-boost-m1.model';
-import {DecisionTree} from '../model/decision-tree/decision-tree.model';
+import {InfoGainAttributeRanking} from '../model/attribute-selection/info-gain-attribute-ranking.model';
 
 export class WekaResultParserUtils {
 
@@ -434,6 +434,30 @@ export class WekaResultParserUtils {
 
         return attributeSelectionResult;
     }
+
+    static extractInfoGainAttributeSelectionResult(contentToParse: string): InfoGainAttributeRanking[] {
+        const infoGainAttributeRankings: InfoGainAttributeRanking[] = [];
+
+        const startOfContentRegex = /(?:Ranked attributes:\n)(.*)/gms;
+        contentToParse = startOfContentRegex.exec(contentToParse)[1];
+
+        const endOfContentRegex = /\n{2}/m;
+        const contentEndIndex: number = contentToParse.search(endOfContentRegex);
+        contentToParse = contentToParse.substr(0, contentEndIndex);
+
+        contentToParse.split('\n').forEach(line => {
+            const rankingValueAttributeNameRegex = /(\d*\.\d*)(?:.*)((?<=\d\s).*)/;
+            const result = rankingValueAttributeNameRegex.exec(line);
+
+            infoGainAttributeRankings.push({
+                rankingValue: Number.parseFloat(result[1]),
+                attributeName: result[2]
+            });
+        });
+
+        return infoGainAttributeRankings;
+    }
+
 
     /**
      * Helper function that removes the leading line breaks of the given string.

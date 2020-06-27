@@ -12,6 +12,8 @@ import {DecisionTreeType} from '../enum/decision-tree-type.enum';
 import {DecisionTree} from '../model/decision-tree/decision-tree.model';
 import {DecisionTreeLeaf} from '../model/decision-tree/decision-tree-leaf.model';
 import {AdaBoostM1Options} from '../model/options/ada-boost-m1-options.model';
+import {InfoGainAttributeEvalOptions} from '../model/options/info-gain-attribute-eval-options.model';
+import {InfoGainAttributeRanking} from '../model/attribute-selection/info-gain-attribute-ranking.model';
 
 describe('WekaLibraryService', () => {
 
@@ -109,7 +111,7 @@ describe('WekaLibraryService', () => {
 
         const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL,
             evaluatorOptions, generalOptions,
-            SearchMethod.BEST_FIRST, bestFirstOptions);
+            SearchMethod.BEST_FIRST, bestFirstOptions) as AttributeSelectionResult;
 
         expect(result).not.toBeNull();
     });
@@ -127,9 +129,29 @@ describe('WekaLibraryService', () => {
 
         const result: AttributeSelectionResult = await serviceUnderTest.performAttributeSelection(EvaluatorType.CFS_SUBSET_EVAL,
             evaluatorOptions, generalOptions,
-            SearchMethod.BEST_FIRST, bestFirstOptions);
+            SearchMethod.BEST_FIRST, bestFirstOptions) as AttributeSelectionResult;
 
         expect(result).not.toBeNull();
+    });
+
+    test('should perform attribute ranking', async() => {
+        const inputFilePath: string = await serviceUnderTest.getUnbalancedTrainingFilePath('test_dataset.arff');
+        const generalOptions: GeneralOptions = new GeneralOptions({
+            i: inputFilePath,
+            x: 10
+        });
+
+        const evaluatorOptions: InfoGainAttributeEvalOptions = new InfoGainAttributeEvalOptions();
+
+        const result: InfoGainAttributeRanking[] = await serviceUnderTest.performAttributeSelection(
+            EvaluatorType.INFO_GAIN_ATTRIBUTE_EVAL,
+            evaluatorOptions,
+            generalOptions,
+            SearchMethod.RANKER,
+            null) as InfoGainAttributeRanking[];
+
+        expect(result).not.toBeNull();
+        expect(result.length).toBe(21);
     });
 
 });
